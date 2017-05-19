@@ -13,10 +13,10 @@ The experiments can be run pn four datasets:
 1. Set-up your experiment in `experiment.py`.
 2. Run experiment:
 ```bash
-python run_experiment.py
+python experiment.py
 ```
 ## Models
-You can run a vanilla VAE ('vae'), a one-layered VAE with the VampPrior ('vae_ vampprior') or a two-layered VAE with the VampPrior by setting `model_name` to either `vae`, `vae_vampprior` or `vae_vampprior_2level`, respectively.
+You can run a vanilla VAE, a one-layered VAE with the VampPrior or a two-layered VAE with the VampPrior by setting `model_name` argument to either `vae`, `vae_vampprior` or `vae_vampprior_2level`, respectively.
 
 ## Citation
 
