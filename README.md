@@ -3,7 +3,7 @@ This is a PyTorch implementation of a new prior ("Variational Mixture of Posteri
 * Jakub M. Tomczak, Max Welling, VAE with a VampPrior, [arXiv preprint](https://arxiv.org/abs/1705.07120), 2017
 
 ## Data
-The experiments can be run pn four datasets:
+The experiments can be run on four datasets:
 * static MNIST: links to the datasets can found at [link](https://github.com/yburda/iwae/tree/master/datasets/BinaryMNIST);
 * binary MNIST: the dataset is loaded from [Keras](https://keras.io/);
 * OMNIGLOT: the dataset could be downloaded from [link](https://github.com/yburda/iwae/blob/master/datasets/OMNIGLOT/chardata.mat);
