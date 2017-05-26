@@ -1,13 +1,3 @@
-Datasets could be downloaded as follows:
-* static MNIST:
-http://www.cs.toronto.edu/~larocheh/public/datasets/binarized_mnist/binarized_mnist_train.amat
-http://www.cs.toronto.edu/~larocheh/public/datasets/binarized_mnist/binarized_mnist_valid.amat
-http://www.cs.toronto.edu/~larocheh/public/datasets/binarized_mnist/binarized_mnist_test.amat
-* OMNIGLOT:
-https://github.com/yburda/iwae/tree/master/datasets/OMNIGLOT
-* Caltech 101 Silhouettes:
-https://people.cs.umass.edu/~marlin/data/caltech101_silhouettes_28_split1.mat
-
 In order to use dynamic MNIST please install Keras:
 https://keras.io/
 Otherwise, please download the original dataset from:
