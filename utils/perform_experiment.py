@@ -2,28 +2,21 @@ from __future__ import print_function
 
 import torch
 
-import copy
+import math
 
 import time
-
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 # ======================================================================================================================
 def experiment_vae(args, train_loader, val_loader, test_loader, model, optimizer, dir, model_name='vae'):
-    if model_name == 'vae':
-        from utils.training import train_vae as train
-        from utils.evaluation import evaluate_vae as evaluate
-    elif model_name == 'vae_vampprior':
-        from utils.training import train_vae_vampprior as train
-        from utils.evaluation import evaluate_vae_vampprior as evaluate
-    elif model_name == 'vae_vampprior_2level':
-        from utils.training import train_vae_vampprior_2level as train
-        from utils.evaluation import evaluate_vae_vampprior_2level as evaluate
-    else:
-        raise Exception('Wrong name of the model!')
+    from utils.training import train_vae as train
+    from utils.evaluation import evaluate_vae as evaluate
 
-    best_model = model
-    best_loss = 1000.
+    # SAVING
+    torch.save(args, dir + args.model_name + '.config')
+
+    # best_model = model
+    best_loss = 100000.
     e = 0
     train_loss_history = []
     train_re_history = []
@@ -63,20 +56,28 @@ def experiment_vae(args, train_loader, val_loader, test_loader, model, optimizer
             e, args.early_stopping_epochs, best_loss
         ))
 
-        # early-stopping
-        if val_loss_epoch < best_loss:
-            e = 0
-            best_loss = val_loss_epoch
-            best_model = model
-        else:
-            e += 1
-            if e > args.early_stopping_epochs:
-                break
 
         if epoch < args.warmup:
             e = 0
+        else:
+            # early-stopping
+            if val_loss_epoch < best_loss:
+                e = 0
+                best_loss = val_loss_epoch
+                # best_model = model
+                print('->save model<-')
+                torch.save(model, dir + args.model_name + '.model')
+            else:
+                e += 1
+                if e > args.early_stopping_epochs:
+                    break
+
+        # NaN
+        if math.isnan(val_loss_epoch):
+            break
 
     # FINAL EVALUATION
+    best_model = torch.load(dir + args.model_name + '.model')
     test_loss, test_re, test_kl, test_log_likelihood, train_log_likelihood, test_elbo, train_elbo = evaluate(args, best_model, train_loader, test_loader, 9999, dir, mode='test')
 
     print('FINAL EVALUATION ON TEST SET\n'
@@ -115,8 +116,6 @@ def experiment_vae(args, train_loader, val_loader, test_loader, model, optimizer
         ), file=f)
 
     # SAVING
-    torch.save(best_model, dir + args.model_name + '.model')
-    torch.save(args, dir + args.model_name + '.config')
     torch.save(train_loss_history, dir + args.model_name + '.train_loss')
     torch.save(train_re_history, dir + args.model_name + '.train_re')
     torch.save(train_kl_history, dir + args.model_name + '.train_kl')

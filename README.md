@@ -5,9 +5,11 @@ This is a PyTorch implementation of a new prior ("Variational Mixture of Posteri
 ## Data
 The experiments can be run on four datasets:
 * static MNIST: links to the datasets can found at [link](https://github.com/yburda/iwae/tree/master/datasets/BinaryMNIST);
-* binary MNIST: the dataset is loaded from [Keras](https://keras.io/);
+* binary MNIST: the dataset is loaded from PyTorch;
 * OMNIGLOT: the dataset could be downloaded from [link](https://github.com/yburda/iwae/blob/master/datasets/OMNIGLOT/chardata.mat);
 * Caltech 101 Silhouettes: the dataset could be downloaded from [link](https://people.cs.umass.edu/~marlin/data/caltech101_silhouettes_28_split1.mat).
+* Frey Faces: the dataset could be downloaded from [link](https://github.com/y0ast/Variational-Autoencoder/blob/master/freyfaces.pkl).
+* Histopathology Gray: the dataset could be downloaded from [link](https://github.com/jmtomczak/vae_householder_flow/tree/master/datasets/histopathologyGray).
 
 ## Run the experiment
 1. Set-up your experiment in `experiment.py`.
@@ -16,7 +18,7 @@ The experiments can be run on four datasets:
 python experiment.py
 ```
 ## Models
-You can run a vanilla VAE, a one-layered VAE with the VampPrior or a two-layered VAE with the VampPrior by setting `model_name` argument to either `vae`, `vae_vampprior` or `vae_vampprior_2level`, respectively.
+You can run a vanilla VAE, a one-layered VAE or a two-layered VAE with the standard prior or the VampPrior by setting `model_name` argument to either: (i) `vae` or `vae_2level` for MLP, (ii) `convvae` or `convvae_2level` for convnets, and specifying `prior` argument to either `standard` or `vampprior`.
 
 ## Citation
 

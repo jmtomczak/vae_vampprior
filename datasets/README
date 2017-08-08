@@ -1,5 +1,1 @@
-In order to use dynamic MNIST please install Keras:
-https://keras.io/
-Otherwise, please download the original dataset from:
-http://yann.lecun.com/exdb/mnist/
-and write your own function for loading this dataset.
+In order to download datasets please see specific folders.

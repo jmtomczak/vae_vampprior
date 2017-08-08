@@ -12,7 +12,13 @@ import pickle
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 # ======================================================================================================================
-def load_static_mnist(args):
+def load_static_mnist(args, **kwargs):
+    # set args
+    args.input_size = [1, 28, 28]
+    args.input_type = 'binary'
+    args.dynamic_binarization = False
+
+    # start processing
     def lines_to_np_array(lines):
         return np.array([[int(i) for i in line.split()] for line in lines])
     with open(os.path.join('datasets', 'MNIST_static', 'binarized_mnist_train.amat')) as f:
@@ -35,74 +41,103 @@ def load_static_mnist(args):
 
     # pytorch data loader
     train = data_utils.TensorDataset(torch.from_numpy(x_train), torch.from_numpy(y_train))
-    train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle=True)
+    train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle=True, **kwargs)
 
     validation = data_utils.TensorDataset(torch.from_numpy(x_val).float(), torch.from_numpy(y_val))
-    val_loader = data_utils.DataLoader(validation, batch_size=args.test_batch_size, shuffle=False)
+    val_loader = data_utils.DataLoader(validation, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
-    test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True)
+    test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
-    return train_loader, val_loader, test_loader
+    return train_loader, val_loader, test_loader, args
 
 
 # ======================================================================================================================
-def load_dynamic_mnist(args):
-    from keras.datasets import mnist
-    # loading data from Keras
-    (x_train, y_train), (x_test, y_test) = mnist.load_data()
+def load_dynamic_mnist(args, **kwargs):
+    # set args
+    args.input_size = [1, 28, 28]
+
+    # start processing
+    from torchvision import datasets, transforms
+    train_loader = torch.utils.data.DataLoader( datasets.MNIST('../data', train=True, download=True,
+                                                               transform=transforms.Compose([
+                                                                   transforms.ToTensor()
+                                                               ])),
+                                                batch_size=args.batch_size, shuffle=True)
+
+    test_loader = torch.utils.data.DataLoader( datasets.MNIST('../data', train=False,
+                                                              transform=transforms.Compose([transforms.ToTensor()
+                                                                        ])),
+                                               batch_size=args.batch_size, shuffle=True)
 
     # preparing data
-    x_train = x_train.astype('float32') / 255.
-    x_test = x_test.astype('float32') / 255.
-    x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))
-    x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))
-    y_test = np.array(y_test, dtype=int)
+    x_train = train_loader.dataset.train_data.float().numpy() / 255.
+    x_train = np.reshape( x_train, (x_train.shape[0], x_train.shape[1] * x_train.shape[2] ) )
 
+    y_train = np.array( train_loader.dataset.train_labels.float().numpy(), dtype=int)
+
+    x_test = test_loader.dataset.test_data.float().numpy() / 255.
+    x_test = np.reshape( x_test, (x_test.shape[0], x_test.shape[1] * x_test.shape[2] ) )
+
+    y_test = np.array( test_loader.dataset.test_labels.float().numpy(), dtype=int)
+
+    # validation set
     x_val = x_train[50000:60000]
     y_val = np.array(y_train[50000:60000], dtype=int)
     x_train = x_train[0:50000]
     y_train = np.array(y_train[0:50000], dtype=int)
 
     # binarize
-    np.random.seed(777)
-    x_val = np.random.binomial(1, x_val)
-    x_test = np.random.binomial(1, x_test)
+    if args.dynamic_binarization:
+        args.input_type = 'binary'
+        np.random.seed(777)
+        x_val = np.random.binomial(1, x_val)
+        x_test = np.random.binomial(1, x_test)
+    else:
+        args.input_type = 'gray'
 
     # pytorch data loader
     train = data_utils.TensorDataset(torch.from_numpy(x_train), torch.from_numpy(y_train))
-    train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle=True)
+    train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle=True, **kwargs)
 
     validation = data_utils.TensorDataset(torch.from_numpy(x_val).float(), torch.from_numpy(y_val))
-    val_loader = data_utils.DataLoader(validation, batch_size=args.test_batch_size, shuffle=False)
+    val_loader = data_utils.DataLoader(validation, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
-    test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=False)
+    test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
-    return train_loader, val_loader, test_loader
+    return train_loader, val_loader, test_loader, args
 
 
 # ======================================================================================================================
-def load_omniglot(args, n_validation=1345):
+def load_omniglot(args, n_validation=1345, **kwargs):
+    # set args
+    args.input_size = [1, 28, 28]
+
+    # start processing
     def reshape_data(data):
         return data.reshape((-1, 28, 28)).reshape((-1, 28*28), order='fortran')
     omni_raw = loadmat(os.path.join('datasets', 'OMNIGLOT', 'chardata.mat'))
 
     # train and test data
     train_data = reshape_data(omni_raw['data'].T.astype('float32'))
-    test_data = reshape_data(omni_raw['testdata'].T.astype('float32'))
+    x_test = reshape_data(omni_raw['testdata'].T.astype('float32'))
 
     # shuffle train data
     np.random.shuffle(train_data)
 
     # set train and validation data
     x_train = train_data[:-n_validation]
-    validation_data = train_data[-n_validation:]
+    x_val = train_data[-n_validation:]
 
-    # fixed binarization
-    np.random.seed(777)
-    x_val = np.random.binomial(1, validation_data)
-    x_test = np.random.binomial(1, test_data)
+    # binarize
+    if args.dynamic_binarization:
+        args.input_type = 'binary'
+        np.random.seed(777)
+        x_val = np.random.binomial(1, x_val)
+        x_test = np.random.binomial(1, x_test)
+    else:
+        args.input_type = 'gray'
 
     # idle y's
     y_train = np.zeros( (x_train.shape[0], 1) )
@@ -111,19 +146,24 @@ def load_omniglot(args, n_validation=1345):
 
     # pytorch data loader
     train = data_utils.TensorDataset(torch.from_numpy(x_train), torch.from_numpy(y_train))
-    train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle=True)
+    train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle=True, **kwargs)
 
     validation = data_utils.TensorDataset(torch.from_numpy(x_val).float(), torch.from_numpy(y_val))
-    val_loader = data_utils.DataLoader(validation, batch_size=args.test_batch_size, shuffle=False)
+    val_loader = data_utils.DataLoader(validation, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
-    test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True)
+    test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
-    return train_loader, val_loader, test_loader
-
+    return train_loader, val_loader, test_loader, args
 
 # ======================================================================================================================
-def load_caltech101silhouettes(args):
+def load_caltech101silhouettes(args, **kwargs):
+    # set args
+    args.input_size = [1, 28, 28]
+    args.input_type = 'binary'
+    args.dynamic_binarization = False
+
+    # start processing
     def reshape_data(data):
         return data.reshape((-1, 28, 28)).reshape((-1, 28*28), order='fortran')
     caltech_raw = loadmat(os.path.join('datasets', 'Caltech101Silhouettes', 'caltech101_silhouettes_28_split1.mat'))
@@ -141,28 +181,104 @@ def load_caltech101silhouettes(args):
 
     # pytorch data loader
     train = data_utils.TensorDataset(torch.from_numpy(x_train), torch.from_numpy(y_train))
-    train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle=True)
+    train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle=True, **kwargs)
 
     validation = data_utils.TensorDataset(torch.from_numpy(x_val).float(), torch.from_numpy(y_val))
-    val_loader = data_utils.DataLoader(validation, batch_size=args.test_batch_size, shuffle=False)
+    val_loader = data_utils.DataLoader(validation, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
-    test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True)
+    test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
-    return train_loader, val_loader, test_loader
+    return train_loader, val_loader, test_loader, args
+
+# ======================================================================================================================
+def load_histopathologyGray(args, **kwargs):
+    # set args
+    args.input_size = [1, 28, 28]
+    args.input_type = 'gray'
+    args.dynamic_binarization = False
+
+    # start processing
+    with open('datasets/HistopathologyGray/histopathology.pkl', 'rb') as f:
+        data = pickle.load(f)
+
+    x_train = np.asarray(data['training']).reshape(-1, 28 * 28)
+    x_val = np.asarray(data['validation']).reshape(-1, 28 * 28)
+    x_test = np.asarray(data['test']).reshape(-1, 28 * 28)
+
+    # idle y's
+    y_train = np.zeros( (x_train.shape[0], 1) )
+    y_val = np.zeros( (x_val.shape[0], 1) )
+    y_test = np.zeros( (x_test.shape[0], 1) )
+
+    # pytorch data loader
+    train = data_utils.TensorDataset(torch.from_numpy(x_train).float(), torch.from_numpy(y_train))
+    train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle=True, **kwargs)
+
+    validation = data_utils.TensorDataset(torch.from_numpy(x_val).float(), torch.from_numpy(y_val))
+    val_loader = data_utils.DataLoader(validation, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+
+    test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
+    test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
+
+    return train_loader, val_loader, test_loader, args
+
+# ======================================================================================================================
+def load_freyfaces(args, TRAIN = 1565, VAL = 200, TEST = 200, **kwargs):
+    # set args
+    args.input_size = [1, 28, 28]
+    args.input_type = 'gray'
+    args.dynamic_binarization = False
+
+    # start processing
+    with open('datasets/Freyfaces/freyfaces.pkl', 'rb') as f:
+        data = pickle.load(f)
+
+    data = data[0] / 255.
+
+    # shuffle data:
+    np.random.shuffle(data)
+
+    # train images
+    x_train = data[0:TRAIN].reshape(-1, 28*20)
+    # validation images
+    x_val = data[TRAIN:(TRAIN + VAL)].reshape(-1, 28*20)
+    # test images
+    x_test = data[(TRAIN + VAL):(TRAIN + VAL + TEST)].reshape(-1, 28*20)
+
+    # idle y's
+    y_train = np.zeros( (x_train.shape[0], 1) )
+    y_val = np.zeros( (x_val.shape[0], 1) )
+    y_test = np.zeros( (x_test.shape[0], 1) )
+
+    # pytorch data loader
+    train = data_utils.TensorDataset(torch.from_numpy(x_train).float(), torch.from_numpy(y_train))
+    train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle=True, **kwargs)
+
+    validation = data_utils.TensorDataset(torch.from_numpy(x_val).float(), torch.from_numpy(y_val))
+    val_loader = data_utils.DataLoader(validation, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+
+    test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
+    test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
+
+    return train_loader, val_loader, test_loader, args
 
 
 # ======================================================================================================================
-def load_dataset(args):
+def load_dataset(args, **kwargs):
     if args.dataset_name == 'static_mnist':
-        train_loader, val_loader, test_loader = load_static_mnist(args)
+        train_loader, val_loader, test_loader, args = load_static_mnist(args, **kwargs)
     elif args.dataset_name == 'dynamic_mnist':
-        train_loader, val_loader, test_loader = load_dynamic_mnist(args)
+        train_loader, val_loader, test_loader, args = load_dynamic_mnist(args, **kwargs)
     elif args.dataset_name == 'omniglot':
-        train_loader, val_loader, test_loader = load_omniglot(args)
+        train_loader, val_loader, test_loader, args = load_omniglot(args, **kwargs)
     elif args.dataset_name == 'caltech101silhouettes':
-        train_loader, val_loader, test_loader = load_caltech101silhouettes(args)
+        train_loader, val_loader, test_loader, args = load_caltech101silhouettes(args, **kwargs)
+    elif args.dataset_name == 'histopathologyGray':
+        train_loader, val_loader, test_loader, args = load_histopathologyGray(args, **kwargs)
+    elif args.dataset_name == 'freyfaces':
+        train_loader, val_loader, test_loader, args = load_freyfaces(args, **kwargs)
     else:
         raise Exception('Wrong name of the dataset!')
 
-    return train_loader, val_loader, test_loader
+    return train_loader, val_loader, test_loader, args
