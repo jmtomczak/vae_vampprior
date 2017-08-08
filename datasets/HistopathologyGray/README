@@ -1,0 +1,3 @@
+Datasets could be downloaded from:
+* histopathology (gray):
+https://github.com/jmtomczak/vae_householder_flow/blob/master/datasets/histopathologyGray/histopathology.pkl.tar.gz
