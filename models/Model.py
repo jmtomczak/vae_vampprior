@@ -2,21 +2,12 @@ from __future__ import print_function
 
 import numpy as np
 
-import math
-
-from scipy.misc import logsumexp
-
-
 import torch
 import torch.utils.data
 import torch.nn as nn
-from torch.nn import Linear
-import torch.nn.functional as F
 from torch.autograd import Variable
 
-from utils.distributions import log_Bernoulli, log_Normal_diag, log_Normal_standard
-from utils.visual_evaluation import plot_histogram
-from utils.nn import normal_init, GatedDense, NonLinear
+from utils.nn import normal_init, NonLinear
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #=======================================================================================================================
@@ -32,7 +23,6 @@ class Model(nn.Module):
                 nonlinearity = nn.Sigmoid()
             elif self.args.input_type == 'continuous':
                 nonlinearity = None
-
             self.means = NonLinear(self.args.number_components, np.prod(self.args.input_size), bias=False, activation=nonlinearity)
             # init pseudoinputs
             normal_init(self.means.linear,self.args.pseudoinputs_mean, self.args.pseudoinputs_std)

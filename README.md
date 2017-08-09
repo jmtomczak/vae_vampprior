@@ -2,6 +2,12 @@
 This is a PyTorch implementation of a new prior ("Variational Mixture of Posteriors" prior, or VampPrior for short) for the variational auto-encoder framework with one layer and two layers of stochastic hidden units as described in the following paper:
 * Jakub M. Tomczak, Max Welling, VAE with a VampPrior, [arXiv preprint](https://arxiv.org/abs/1705.07120), 2017
 
+## Requirements
+In order to run the code please install:
+* `pytorch 0.2.0`
+* `numpy`
+* `scipy`
+
 ## Data
 The experiments can be run on four datasets:
 * static MNIST: links to the datasets can found at [link](https://github.com/yburda/iwae/tree/master/datasets/BinaryMNIST);

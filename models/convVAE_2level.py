@@ -10,7 +10,6 @@ from scipy.misc import logsumexp
 import torch
 import torch.utils.data
 import torch.nn as nn
-from torch.nn import Linear
 from torch.autograd import Variable
 
 from utils.distributions import log_Bernoulli, log_Normal_diag, log_Normal_standard, log_Logistic_256
@@ -107,9 +106,9 @@ class VAE(Model):
 
         if self.args.input_type == 'binary':
             self.p_x_mean = Conv2d(64, 1, 1, 1, 0, activation=nn.Sigmoid())
-        elif self.args.input_type == 'gray':
-            self.p_x_mean = Conv2d(64, 1, 1, 1, 0, activation=nn.Sigmoid() )
-            self.p_x_logvar = Conv2d(64, 1, 1, 1, 0, activation=nn.Hardtanh(min_value=-5, max_value=0.))
+        elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
+            self.p_x_mean = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Sigmoid() )
+            self.p_x_logvar = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Hardtanh(min_value=-5, max_value=0.))
 
         # Xavier initialization (normal)
         iter = 0
@@ -144,8 +143,6 @@ class VAE(Model):
             RE = log_Bernoulli(x, x_mean, dim=1)
         elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
             RE = -log_Logistic_256(x, x_mean, x_logvar, dim=1)
-        # elif self.args.input_type == 'continuous':
-        #     RE = log_Normal_diag(x, x_mean, x_logvar, dim=1) + 0.5*self.args.input_size[0]*self.args.input_size[1]*self.args.input_size[2]*math.log(2.*math.pi)
         else:
             raise Exception('Wrong input type!')
 
@@ -156,6 +153,7 @@ class VAE(Model):
         log_q_z2 = log_Normal_diag(z2_q, z2_q_mean, z2_q_logvar, dim=1)
         KL = -(log_p_z1 + log_p_z2 - log_q_z1 - log_q_z2)
 
+        # full loss
         loss = -RE + beta * KL
 
         if average:
@@ -190,7 +188,6 @@ class VAE(Model):
                 x = x_single.expand(S, x_single.size(1)).contiguous()
 
                 a_tmp, _, _ = self.calculate_loss(x)
-
                 a.append( -a_tmp.cpu().data.numpy() )
 
             # calculate max
@@ -358,25 +355,23 @@ class VAE(Model):
 
         elif self.args.prior == 'vampprior':
             # z - MB x M
-            MB = z2.size(0)
             C = self.args.number_components
-            M = z2.size(1)
 
             # calculate params
             X = self.means(self.idle_input).view(-1, self.args.input_size[0], self.args.input_size[1], self.args.input_size[2])
 
             # calculate params for given data
-            z2_p_mean, z2_p_logvar = self.q_z2(X)  # C x M
+            z2_p_mean, z2_p_logvar = self.q_z2(X)  # C x M)
 
             # expand z
-            z_expand = z2.unsqueeze(1).expand(MB, C, M)
-            means = z2_p_mean.unsqueeze(0).expand(MB, C, M)
-            logvars = z2_p_logvar.unsqueeze(0).expand(MB, C, M)
+            z_expand = z2.unsqueeze(1)
+            means = z2_p_mean.unsqueeze(0)
+            logvars = z2_p_logvar.unsqueeze(0)
 
-            a = log_Normal_diag(z_expand, means, logvars, dim=2).squeeze(2) - math.log(C)  # MB x C
-            a_max, _ = torch.max(a, 1)  # MB x 1
+            a = log_Normal_diag(z_expand, means, logvars, dim=2) - math.log(C)  # MB x C
+            a_max, _ = torch.max(a, 1)  # MB
             # calculte log-sum-exp
-            log_prior = a_max + torch.log(torch.sum(torch.exp(a - a_max.expand(MB, C)), 1))  # MB x 1
+            log_prior = (a_max + torch.log(torch.sum(torch.exp(a - a_max.unsqueeze(1)), 1)))  # MB
 
         else:
             raise Exception('Wrong name of the prior!')

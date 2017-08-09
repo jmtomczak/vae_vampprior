@@ -226,7 +226,7 @@ def load_histopathologyGray(args, **kwargs):
 # ======================================================================================================================
 def load_freyfaces(args, TRAIN = 1565, VAL = 200, TEST = 200, **kwargs):
     # set args
-    args.input_size = [1, 28, 28]
+    args.input_size = [1, 28, 20]
     args.input_type = 'gray'
     args.dynamic_binarization = False
 

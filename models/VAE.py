@@ -11,7 +11,6 @@ import torch
 import torch.utils.data
 import torch.nn as nn
 from torch.nn import Linear
-import torch.nn.functional as F
 from torch.autograd import Variable
 
 from utils.distributions import log_Bernoulli, log_Normal_diag, log_Normal_standard, log_Logistic_256
@@ -71,8 +70,6 @@ class VAE(Model):
             RE = log_Bernoulli(x, x_mean, dim=1)
         elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
             RE = -log_Logistic_256(x, x_mean, x_logvar, dim=1)
-        # elif self.args.input_type == 'continuous':
-        #     RE = log_Normal_diag(x, x_mean, x_logvar, dim=1) + 0.5*self.args.input_size[0]*self.args.input_size[1]*self.args.input_size[2]*math.log(2.*math.pi)
         else:
             raise Exception('Wrong input type!')
 
@@ -198,9 +195,7 @@ class VAE(Model):
 
         elif self.args.prior == 'vampprior':
             # z - MB x M
-            MB = z.size(0)
             C = self.args.number_components
-            M = z.size(1)
 
             # calculate params
             X = self.means(self.idle_input)
@@ -209,14 +204,15 @@ class VAE(Model):
             z_p_mean, z_p_logvar = self.q_z(X)  # C x M
 
             # expand z
-            z_expand = z.unsqueeze(1).expand(MB, C, M)
-            means = z_p_mean.unsqueeze(0).expand(MB, C, M)
-            logvars = z_p_logvar.unsqueeze(0).expand(MB, C, M)
+            z_expand = z.unsqueeze(1)
+            means = z_p_mean.unsqueeze(0)
+            logvars = z_p_logvar.unsqueeze(0)
 
-            a = log_Normal_diag(z_expand, means, logvars, dim=2).squeeze(2) - math.log(C)  # MB x C
+            a = log_Normal_diag(z_expand, means, logvars, dim=2) - math.log(C)  # MB x C
             a_max, _ = torch.max(a, 1)  # MB x 1
+
             # calculte log-sum-exp
-            log_prior = a_max + torch.log(torch.sum(torch.exp(a - a_max.expand(MB, C)), 1))  # MB x 1
+            log_prior = a_max + torch.log(torch.sum(torch.exp(a - a_max.unsqueeze(1)), 1))  # MB x 1
 
         else:
             raise Exception('Wrong name of the prior!')

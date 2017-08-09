@@ -55,7 +55,7 @@ parser.add_argument('--activation', type=str, default=None, metavar='ACT',
 
 parser.add_argument('--number_components', type=int, default=500, metavar='NC',
                     help='number of pseudo-inputs')
-parser.add_argument('--pseudoinputs_mean', type=float, default=-1.0)
+parser.add_argument('--pseudoinputs_mean', type=float, default=-4.0)
 parser.add_argument('--pseudoinputs_std', type=float, default=0.05)
 
 # model: model name, prior
@@ -75,7 +75,7 @@ parser.add_argument('--MB', type=int, default=100, metavar='MBLL',
                     help='size of a mini-batch used for approximating log-likelihood')
 
 # dataset
-parser.add_argument('--dataset_name', type=str, default='histopathologyGray', metavar='DN',
+parser.add_argument('--dataset_name', type=str, default='freyfaces', metavar='DN',
                     help='name of the dataset: static_mnist, dynamic_mnist, omniglot, caltech101silhouettes, histopathologyGray, freyfaces')
 
 parser.add_argument('--dynamic_binarization', action='store_true', default=False,
@@ -154,8 +154,10 @@ def run(args, kwargs):
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 if __name__ == "__main__":
-
-    run(args, kwargs)
+    models = ['convvae']
+    for m in models:
+        args.model_name = m
+        run(args, kwargs)
 
 # # # # # # # # # # #
 # END EXPERIMENTS # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

@@ -15,12 +15,14 @@ from torch.autograd import Variable
 from utils.distributions import log_Bernoulli, log_Normal_diag, log_Normal_standard, log_Logistic_256
 from utils.visual_evaluation import plot_histogram
 from utils.nn import he_init, GatedDense, NonLinear
+
+from Model import Model
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #=======================================================================================================================
-class VAE(nn.Module):
+class VAE(Model):
     def __init__(self, args):
-        super(VAE, self).__init__()
+        super(VAE, self).__init__(args)
 
         self.args = args
 
@@ -81,12 +83,6 @@ class VAE(nn.Module):
             if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
                 he_init(m)
 
-        if self.args.prior == 'vampprior':
-            self.means = NonLinear(self.args.number_components, np.prod(self.args.input_size), bias=False, activation=nn.Sigmoid())
-            self.idle_input = Variable(torch.eye(self.args.number_components, self.args.number_components), requires_grad=False)
-            if self.args.cuda:
-                self.idle_input = self.idle_input.cuda()
-
     # AUXILIARY METHODS
     def reparameterize(self, mu, logvar):
         std = logvar.mul(0.5).exp_()
@@ -112,8 +108,6 @@ class VAE(nn.Module):
             RE = log_Bernoulli(x, x_mean, dim=1)
         elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
             RE = -log_Logistic_256(x, x_mean, x_logvar, dim=1)
-        # elif self.args.input_type == 'continuous':
-        #     RE = log_Normal_diag(x, x_mean, x_logvar, dim=1) + 0.5*self.args.input_size[0]*self.args.input_size[1]*self.args.input_size[2]*math.log(2.*math.pi)
         else:
             raise Exception('Wrong input type!')
 
@@ -275,25 +269,23 @@ class VAE(nn.Module):
 
         elif self.args.prior == 'vampprior':
             # z2 - MB x M
-            MB = z2.size(0)
             C = self.args.number_components
-            M = z2.size(1)
 
             # calculate params
             X = self.means(self.idle_input)
 
             # calculate params for given data
-            z_p_mean, z_p_logvar = self.q_z2(X)  # C x M
+            z2_p_mean, z2_p_logvar = self.q_z2(X)  # C x M
 
             # expand z
-            z_expand = z2.unsqueeze(1).expand(MB, C, M)
-            means = z_p_mean.unsqueeze(0).expand(MB, C, M)
-            logvars = z_p_logvar.unsqueeze(0).expand(MB, C, M)
+            z_expand = z2.unsqueeze(1)
+            means = z2_p_mean.unsqueeze(0)
+            logvars = z2_p_logvar.unsqueeze(0)
 
-            a = log_Normal_diag(z_expand, means, logvars, dim=2).squeeze(2) - math.log(C)  # MB x C
-            a_max, _ = torch.max(a, 1)  # MB x 1
+            a = log_Normal_diag(z_expand, means, logvars, dim=2) - math.log(C)  # MB x C
+            a_max, _ = torch.max(a, 1)  # MB
             # calculte log-sum-exp
-            log_prior = a_max + torch.log(torch.sum(torch.exp(a - a_max.expand(MB, C)), 1))  # MB x 1
+            log_prior = (a_max + torch.log(torch.sum(torch.exp(a - a_max.unsqueeze(1)), 1)))  # MB
 
         else:
             raise Exception('Wrong name of the prior!')
