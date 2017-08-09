@@ -5,6 +5,8 @@ from torch.autograd import Variable
 
 from utils.visual_evaluation import plot_images
 
+import numpy as np
+
 import time
 
 import os
@@ -26,6 +28,7 @@ def evaluate_vae(args, model, train_loader, data_loader, epoch, dir, mode):
         data, target = Variable(data, volatile=True), Variable(target)
 
         x = data
+
         # calculate loss function
         loss, RE, KL = model.calculate_loss(x, average=True)
 

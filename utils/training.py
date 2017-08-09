@@ -2,6 +2,8 @@ from __future__ import print_function
 
 import torch
 from torch.autograd import Variable
+
+import numpy as np
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 # ======================================================================================================================
@@ -28,9 +30,10 @@ def train_vae(epoch, args, train_loader, model, optimizer):
         data, target = Variable(data), Variable(target)
         # dynamic binarization
         if args.dynamic_binarization:
-                x = torch.bernoulli(data)
+            x = torch.bernoulli(data)
         else:
             x = data
+
         # reset gradients
         optimizer.zero_grad()
         # loss evaluation (forward pass)

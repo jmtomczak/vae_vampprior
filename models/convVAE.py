@@ -24,6 +24,13 @@ class VAE(Model):
     def __init__(self, args):
         super(VAE, self).__init__(args)
 
+        if self.args.dataset_name == 'freyfaces':
+            h_size = 210
+        elif self.args.dataset_name == 'cifar10':
+            h_size = 384
+        else:
+            h_size = 294
+
         # encoder: q(z | x)
         self.q_z_layers = nn.ModuleList()
 
@@ -39,8 +46,8 @@ class VAE(Model):
         self.q_z_layers.append(GatedConv2d(64, 6, 3, 1, 1))
 
         # linear layers
-        self.q_z_mean = nn.Linear(210, self.args.z1_size)
-        self.q_z_logvar = NonLinear(210, self.args.z1_size, activation=nn.Hardtanh(min_value=-6., max_value=2.))
+        self.q_z_mean = nn.Linear(h_size, self.args.z1_size)
+        self.q_z_logvar = NonLinear(h_size, self.args.z1_size, activation=nn.Hardtanh(min_val=-6.,max_val=2.))
 
         # decoder: p(x | z)
         self.p_x_layers = nn.ModuleList()
@@ -49,7 +56,7 @@ class VAE(Model):
 
         # PixelCNN
         act = nn.ReLU()
-        self.pixelcnn = nn.Sequential(MaskedConv2d('A', 2, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
+        self.pixelcnn = nn.Sequential(MaskedConv2d('A', self.args.input_size[0] + self.args.input_size[0], 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
             MaskedConv2d('B', 64, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
             MaskedConv2d('B', 64, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
             MaskedConv2d('B', 64, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
@@ -62,12 +69,18 @@ class VAE(Model):
             self.p_x_mean = Conv2d(64, 1, 1, 1, 0, activation=nn.Sigmoid())
         elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
             self.p_x_mean = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Sigmoid())
-            self.p_x_logvar = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Hardtanh(min_value=-5, max_value=0.))
+            self.p_x_logvar = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Hardtanh(min_val=-5, max_val=0.))
 
-        # Xavier initialization (normal)
+        # weights initialization
+        if args.prior == 'vampprior':
+            iter = 0
+        else:
+            iter = 1
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                he_init(m)
+                iter = iter + 1
+                if iter > 1:
+                    he_init(m)
 
     # AUXILIARY METHODS
     def calculate_loss(self, x, beta=1., average=False):

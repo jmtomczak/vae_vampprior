@@ -19,10 +19,7 @@ class Model(nn.Module):
 
         if self.args.prior == 'vampprior':
             # create pseudo-input for the VampPrior
-            if self.args.input_type == 'binary' or self.args.input_type == 'gray':
-                nonlinearity = nn.Sigmoid()
-            elif self.args.input_type == 'continuous':
-                nonlinearity = None
+            nonlinearity = nn.Sigmoid()
             self.means = NonLinear(self.args.number_components, np.prod(self.args.input_size), bias=False, activation=nonlinearity)
             # init pseudoinputs
             normal_init(self.means.linear,self.args.pseudoinputs_mean, self.args.pseudoinputs_std)

@@ -18,6 +18,8 @@ def load_static_mnist(args, **kwargs):
     args.input_type = 'binary'
     args.dynamic_binarization = False
 
+    args.pseudoinputs_mean = -5.0
+
     # start processing
     def lines_to_np_array(lines):
         return np.array([[int(i) for i in line.split()] for line in lines])
@@ -51,11 +53,14 @@ def load_static_mnist(args, **kwargs):
 
     return train_loader, val_loader, test_loader, args
 
-
 # ======================================================================================================================
 def load_dynamic_mnist(args, **kwargs):
     # set args
     args.input_size = [1, 28, 28]
+    args.input_type = 'binary'
+    args.dynamic_binarization = True
+
+    args.pseudoinputs_mean = -5.0
 
     # start processing
     from torchvision import datasets, transforms
@@ -108,11 +113,14 @@ def load_dynamic_mnist(args, **kwargs):
 
     return train_loader, val_loader, test_loader, args
 
-
 # ======================================================================================================================
 def load_omniglot(args, n_validation=1345, **kwargs):
     # set args
     args.input_size = [1, 28, 28]
+    args.input_type = 'binary'
+    args.dynamic_binarization = True
+
+    args.pseudoinputs_mean = -5.0
 
     # start processing
     def reshape_data(data):
@@ -163,6 +171,8 @@ def load_caltech101silhouettes(args, **kwargs):
     args.input_type = 'binary'
     args.dynamic_binarization = False
 
+    args.pseudoinputs_mean = -5.0
+
     # start processing
     def reshape_data(data):
         return data.reshape((-1, 28, 28)).reshape((-1, 28*28), order='fortran')
@@ -198,6 +208,8 @@ def load_histopathologyGray(args, **kwargs):
     args.input_type = 'gray'
     args.dynamic_binarization = False
 
+    args.pseudoinputs_mean = -2.0
+
     # start processing
     with open('datasets/HistopathologyGray/histopathology.pkl', 'rb') as f:
         data = pickle.load(f)
@@ -229,6 +241,8 @@ def load_freyfaces(args, TRAIN = 1565, VAL = 200, TEST = 200, **kwargs):
     args.input_size = [1, 28, 20]
     args.input_type = 'gray'
     args.dynamic_binarization = False
+
+    args.pseudoinputs_mean = -2.0
 
     # start processing
     with open('datasets/Freyfaces/freyfaces.pkl', 'rb') as f:
@@ -263,6 +277,55 @@ def load_freyfaces(args, TRAIN = 1565, VAL = 200, TEST = 200, **kwargs):
 
     return train_loader, val_loader, test_loader, args
 
+# ======================================================================================================================
+def load_cifar10(args, **kwargs):
+    # set args
+    args.input_size = [3, 32, 32]
+    args.input_type = 'continuous'
+    args.dynamic_binarization = False
+
+    args.pseudoinputs_mean = -5.0
+
+    # start processing
+    from torchvision import datasets, transforms
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+    ])
+
+    # load main train dataset
+    training_dataset = datasets.CIFAR10('datasets/Cifar10/', train=True, download=True, transform=transform)
+    train_data = training_dataset.train_data / 255.
+    train_data = np.swapaxes( np.swapaxes(train_data,1,2), 1, 3)
+    train_data = np.reshape(train_data, (-1, np.prod(args.input_size)) )
+    np.random.shuffle(train_data)
+
+    x_val = train_data[40000:50000]
+    x_train = train_data[0:40000]
+
+    # fake labels just to fit the framework
+    y_train = np.zeros( (x_train.shape[0], 1) )
+    y_val = np.zeros( (x_val.shape[0], 1) )
+
+    # train loader
+    train = data_utils.TensorDataset(torch.from_numpy(x_train).float(), torch.from_numpy(y_train))
+    train_loader = data_utils.DataLoader(train, batch_size=args.batch_size, shuffle=True, **kwargs)
+
+    # validation loader
+    validation = data_utils.TensorDataset(torch.from_numpy(x_val).float(), torch.from_numpy(y_val))
+    val_loader = data_utils.DataLoader(validation, batch_size=args.test_batch_size, shuffle=False, **kwargs)
+
+    # test loader
+    test_dataset = datasets.CIFAR10('datasets/Cifar10/', train=False, transform=transform )
+    test_data = test_dataset.test_data / 255.
+    test_data = np.swapaxes( np.swapaxes(test_data,1,2), 1, 3)
+    x_test = np.reshape(test_data, (-1, np.prod(args.input_size)) )
+
+    y_test = np.zeros((x_test.shape[0], 1))
+
+    test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
+    test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
+
+    return train_loader, val_loader, test_loader, args
 
 # ======================================================================================================================
 def load_dataset(args, **kwargs):
@@ -278,6 +341,8 @@ def load_dataset(args, **kwargs):
         train_loader, val_loader, test_loader, args = load_histopathologyGray(args, **kwargs)
     elif args.dataset_name == 'freyfaces':
         train_loader, val_loader, test_loader, args = load_freyfaces(args, **kwargs)
+    elif args.dataset_name == 'cifar10':
+        train_loader, val_loader, test_loader, args = load_cifar10(args, **kwargs)
     else:
         raise Exception('Wrong name of the dataset!')
 

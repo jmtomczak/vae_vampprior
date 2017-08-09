@@ -25,10 +25,10 @@ class VAE(Model):
     def __init__(self, args):
         super(VAE, self).__init__(args)
 
-        self.stop = False
-
         if self.args.dataset_name == 'freyfaces':
             h_size = 210
+        elif self.args.dataset_name == 'cifar10':
+            h_size = 384
         else:
             h_size = 294
 
@@ -36,7 +36,7 @@ class VAE(Model):
         self.q_z2_layers = nn.ModuleList()
 
         # conv 0
-        self.q_z2_layers.append(GatedConv2d(1, 32, 5, 1, 3))
+        self.q_z2_layers.append(GatedConv2d(self.args.input_size[0], 32, 5, 1, 3))
         # conv 1
         self.q_z2_layers.append(GatedConv2d(32, 32, 5, 2, 1))
         # conv 2
@@ -48,7 +48,7 @@ class VAE(Model):
 
         # linear layers
         self.q_z2_mean = NonLinear(h_size, self.args.z2_size, activation=None)
-        self.q_z2_logvar = NonLinear(h_size, self.args.z2_size, activation=nn.Hardtanh(min_value=-6., max_value=2.))
+        self.q_z2_logvar = NonLinear(h_size, self.args.z2_size, activation=nn.Hardtanh(min_val=-6., max_val=2.))
 
         # encoder: q(z1|x,z2)
         self.q_z1_layers_x = nn.ModuleList()
@@ -57,7 +57,7 @@ class VAE(Model):
 
         # PROCESSING x
         # conv 0
-        self.q_z1_layers_x.append(GatedConv2d(1, 32, 5, 1, 3))
+        self.q_z1_layers_x.append(GatedConv2d(self.args.input_size[0], 32, 5, 1, 3))
         # conv 1
         self.q_z1_layers_x.append(GatedConv2d(32, 32, 5, 2, 1))
         # conv 2
@@ -75,7 +75,7 @@ class VAE(Model):
 
         # linear layers
         self.q_z1_mean = NonLinear(300, self.args.z1_size, activation=None)
-        self.q_z1_logvar = NonLinear(300, self.args.z1_size, activation=nn.Hardtanh(min_value=-6., max_value=2.))
+        self.q_z1_logvar = NonLinear(300, self.args.z1_size, activation=nn.Hardtanh(min_val=-6., max_val=2.))
 
         # decoder p(z1|z2)
         self.p_z1_layers = nn.ModuleList()
@@ -83,7 +83,7 @@ class VAE(Model):
         self.p_z1_layers.append( GatedDense(300, 300))
 
         self.p_z1_mean = NonLinear(300, self.args.z1_size, activation=None)
-        self.p_z1_logvar = NonLinear(300, self.args.z1_size, activation=nn.Hardtanh(min_value=-6., max_value=2.))
+        self.p_z1_logvar = NonLinear(300, self.args.z1_size, activation=nn.Hardtanh(min_val=-6., max_val=2.))
 
         # decoder: p(x | z)
         self.p_x_layers_z1 = nn.ModuleList()
@@ -95,7 +95,7 @@ class VAE(Model):
         # PixelCNN
         act = nn.ReLU()
         self.pixelcnn = nn.Sequential(
-            MaskedConv2d('A', 3, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
+            MaskedConv2d('A', self.args.input_size[0] + 2*self.args.input_size[0], 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
             MaskedConv2d('B', 64, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
             MaskedConv2d('B', 64, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
             MaskedConv2d('B', 64, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
@@ -108,10 +108,13 @@ class VAE(Model):
             self.p_x_mean = Conv2d(64, 1, 1, 1, 0, activation=nn.Sigmoid())
         elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
             self.p_x_mean = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Sigmoid() )
-            self.p_x_logvar = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Hardtanh(min_value=-5, max_value=0.))
+            self.p_x_logvar = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Hardtanh(min_val=-5, max_val=0.))
 
-        # Xavier initialization (normal)
-        iter = 0
+        # weights initialization
+        if args.prior == 'vampprior':
+            iter = 0
+        else:
+            iter = 1
         for m in self.modules():
             if isinstance(m, nn.Linear):
                 iter = iter + 1

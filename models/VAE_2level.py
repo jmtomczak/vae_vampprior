@@ -32,8 +32,8 @@ class VAE(Model):
         self.q_z2_layers.append( GatedDense(np.prod(self.args.input_size), 300) )
         self.q_z2_layers.append( GatedDense(300, 300) )
 
-        self.q_z2_mean = Linear(300, self.args.z1_size)
-        self.q_z2_logvar = Linear(300, self.args.z1_size)
+        self.q_z2_mean = Linear(300, self.args.z2_size)
+        self.q_z2_logvar = NonLinear(300, self.args.z2_size, activation=nn.Hardtanh(min_val=-6.,max_val=2.))
 
         # encoder: q(z1 | x, z2)
         self.q_z1_layers_x = nn.ModuleList()
@@ -48,7 +48,7 @@ class VAE(Model):
         self.q_z1_layers_joint.append( GatedDense(2 * 300, 300) )
 
         self.q_z1_mean = Linear(300, self.args.z1_size)
-        self.q_z1_logvar = Linear(300, self.args.z1_size)
+        self.q_z1_logvar = NonLinear(300, self.args.z1_size, activation=nn.Hardtanh(min_val=-6.,max_val=2.))
 
         # decoder: p(z1 | z2)
         self.p_z1_layers = nn.ModuleList()
@@ -58,7 +58,7 @@ class VAE(Model):
         self.p_z1_layers.append( GatedDense(300, 300) )
 
         self.p_z1_mean = Linear(300, self.args.z1_size)
-        self.p_z1_logvar = Linear(300, self.args.z1_size)
+        self.p_z1_logvar = NonLinear(300, self.args.z1_size, activation=nn.Hardtanh(min_val=-6.,max_val=2.))
 
         # decoder: p(x | z1, z2)
         self.p_x_layers_z1 = nn.ModuleList()
@@ -68,20 +68,26 @@ class VAE(Model):
         # z1
         self.p_x_layers_z1.append( GatedDense(self.args.z1_size, 300) )
         # z2
-        self.p_x_layers_z2.append(GatedDense(self.args.z2_size, 300))
+        self.p_x_layers_z2.append( GatedDense(self.args.z2_size, 300) )
         # joint
         self.p_x_layers_joint.append( GatedDense(2 * 300, 300) )
 
         if self.args.input_type == 'binary':
             self.p_x_mean = NonLinear(300, np.prod(self.args.input_size), activation=nn.Sigmoid())
-        elif self.args.input_type == 'gray':
+        elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
             self.p_x_mean = NonLinear(300, np.prod(self.args.input_size), activation=nn.Sigmoid())
-            self.p_x_logvar = NonLinear(300, np.prod(self.args.input_size), activation=nn.Hardtanh(min_value=-5,max_value=0))
+            self.p_x_logvar = NonLinear(300, np.prod(self.args.input_size), activation=nn.Hardtanh(min_val=-4.5,max_val=0))
 
-        # Xavier initialization (normal)
+        # weights initialization
+        if args.prior == 'vampprior':
+            iter = 0
+        else:
+            iter = 1
         for m in self.modules():
-            if isinstance(m, nn.Linear) or isinstance(m, nn.Conv2d):
-                he_init(m)
+            if isinstance(m, nn.Linear):
+                iter = iter + 1
+                if iter > 1:
+                    he_init(m)
 
     # AUXILIARY METHODS
     def reparameterize(self, mu, logvar):

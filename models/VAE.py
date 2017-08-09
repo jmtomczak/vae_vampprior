@@ -33,7 +33,7 @@ class VAE(Model):
         self.q_z_layers.append( GatedDense(300, 300) )
 
         self.q_z_mean = Linear(300, self.args.z1_size)
-        self.q_z_logvar = Linear(300, self.args.z1_size)
+        self.q_z_logvar = NonLinear(300, self.args.z1_size, activation=nn.Hardtanh(min_val=-6.,max_val=2.))
 
         # decoder: p(x | z)
         self.p_x_layers = nn.ModuleList()
@@ -44,14 +44,20 @@ class VAE(Model):
 
         if self.args.input_type == 'binary':
             self.p_x_mean = NonLinear(300, np.prod(self.args.input_size), activation=nn.Sigmoid())
-        elif self.args.input_type == 'gray':
+        elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
             self.p_x_mean = NonLinear(300, np.prod(self.args.input_size), activation=nn.Sigmoid())
-            self.p_x_logvar = NonLinear(300, np.prod(self.args.input_size), activation=nn.Hardtanh(min_value=-5,max_value=0))
+            self.p_x_logvar = NonLinear(300, np.prod(self.args.input_size), activation=nn.Hardtanh(min_val=-5.,max_val=0))
 
-        # Xavier initialization (normal)
+        # weights initialization
+        if args.prior == 'vampprior':
+            iter = 0
+        else:
+            iter = 1
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                he_init(m)
+                iter = iter + 1
+                if iter > 1:
+                    he_init(m)
 
     # AUXILIARY METHODS
 
