@@ -46,21 +46,18 @@ class VAE(Model):
             self.p_x_mean = NonLinear(300, np.prod(self.args.input_size), activation=nn.Sigmoid())
         elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
             self.p_x_mean = NonLinear(300, np.prod(self.args.input_size), activation=nn.Sigmoid())
-            self.p_x_logvar = NonLinear(300, np.prod(self.args.input_size), activation=nn.Hardtanh(min_val=-5.,max_val=0))
+            self.p_x_logvar = NonLinear(300, np.prod(self.args.input_size), activation=nn.Hardtanh(min_val=-4.5,max_val=0))
 
         # weights initialization
-        if args.prior == 'vampprior':
-            iter = 0
-        else:
-            iter = 1
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                iter = iter + 1
-                if iter > 1:
-                    he_init(m)
+                he_init(m)
+
+        # add pseudo-inputs if VampPrior
+        if self.args.prior == 'vampprior':
+            self.add_pseudoinputs()
 
     # AUXILIARY METHODS
-
     def calculate_loss(self, x, beta=1., average=False):
         '''
         :param x: input image(s)

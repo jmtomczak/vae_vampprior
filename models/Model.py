@@ -17,19 +17,21 @@ class Model(nn.Module):
 
         self.args = args
 
-        if self.args.prior == 'vampprior':
-            # create pseudo-input for the VampPrior
-            nonlinearity = nn.Sigmoid()
-            self.means = NonLinear(self.args.number_components, np.prod(self.args.input_size), bias=False, activation=nonlinearity)
-            # init pseudoinputs
-            normal_init(self.means.linear,self.args.pseudoinputs_mean, self.args.pseudoinputs_std)
-
-            # create an idle input for calling pseudo-inputs
-            self.idle_input = Variable(torch.eye(self.args.number_components, self.args.number_components), requires_grad=False)
-            if self.args.cuda:
-                self.idle_input = self.idle_input.cuda()
-
     # AUXILIARY METHODS
+    def add_pseudoinputs(self):
+
+        nonlinearity = nn.Sigmoid()
+
+        self.means = NonLinear(self.args.number_components, np.prod(self.args.input_size), bias=False, activation=nonlinearity)
+
+        # init pseudoinputs
+        normal_init(self.means.linear,self.args.pseudoinputs_mean, self.args.pseudoinputs_std)
+
+        # create an idle input for calling pseudo-inputs
+        self.idle_input = Variable(torch.eye(self.args.number_components, self.args.number_components), requires_grad=False)
+        if self.args.cuda:
+            self.idle_input = self.idle_input.cuda()
+
     def reparameterize(self, mu, logvar):
         std = logvar.mul(0.5).exp_()
         if self.args.cuda:
@@ -51,3 +53,5 @@ class Model(nn.Module):
     # THE MODEL: FORWARD PASS
     def forward(self, x):
         return 0.
+
+#=======================================================================================================================

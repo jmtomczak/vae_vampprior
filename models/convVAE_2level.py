@@ -108,29 +108,18 @@ class VAE(Model):
             self.p_x_mean = Conv2d(64, 1, 1, 1, 0, activation=nn.Sigmoid())
         elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
             self.p_x_mean = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Sigmoid() )
-            self.p_x_logvar = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Hardtanh(min_val=-5, max_val=0.))
+            self.p_x_logvar = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Hardtanh(min_val=-4.5, max_val=0.))
 
         # weights initialization
-        if args.prior == 'vampprior':
-            iter = 0
-        else:
-            iter = 1
         for m in self.modules():
             if isinstance(m, nn.Linear):
-                iter = iter + 1
-                if iter > 1:
-                    he_init(m)
+                he_init(m)
+
+        # add pseudo-inputs if VampPrior
+        if self.args.prior == 'vampprior':
+            self.add_pseudoinputs()
 
     # AUXILIARY METHODS
-    def reparameterize(self, mu, logvar):
-        std = logvar.mul(0.5).exp_()
-        if self.args.cuda:
-            eps = torch.cuda.FloatTensor(std.size()).normal_()
-        else:
-            eps = torch.FloatTensor(std.size()).normal_()
-        eps = Variable(eps)
-        return eps.mul(std).add_(mu)
-
     def calculate_loss(self, x, beta=1., average=False):
         '''
         :param x: input image(s)
