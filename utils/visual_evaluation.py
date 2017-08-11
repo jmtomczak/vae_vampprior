@@ -25,9 +25,6 @@ def plot_images(args, x_sample, dir, file_name, size_x=3, size_y=3):
     gs = gridspec.GridSpec(size_x, size_y)
     gs.update(wspace=0.05, hspace=0.05)
 
-    min_x = np.min(x_sample)
-    max_x = np.max(x_sample)
-
     for i, sample in enumerate(x_sample):
         ax = plt.subplot(gs[i])
         plt.axis('off')
@@ -39,7 +36,7 @@ def plot_images(args, x_sample, dir, file_name, size_x=3, size_y=3):
         sample = sample.swapaxes(0, 1)
         if args.input_type == 'binary' or args.input_type == 'gray':
             sample = sample[:, :, 0]
-            plt.imshow(sample, cmap='gray', vmin = min_x, vmax = max_x)
+            plt.imshow(sample, cmap='gray')
         else:
             plt.imshow(sample)
 

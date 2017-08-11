@@ -40,8 +40,8 @@ parser.add_argument('--warmup', type=int, default=100, metavar='WU',
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='enables CUDA training')
 # random seed
-parser.add_argument('--seed', type=int, default=1, metavar='S',
-                    help='random seed (default: 1)')
+parser.add_argument('--seed', type=int, default=14, metavar='S',
+                    help='random seed (default: 14)')
 # model: latent size, input_size, so on
 parser.add_argument('--z1_size', type=int, default=40, metavar='M1',
                     help='latent size')
@@ -55,9 +55,9 @@ parser.add_argument('--activation', type=str, default=None, metavar='ACT',
 
 parser.add_argument('--number_components', type=int, default=500, metavar='NC',
                     help='number of pseudo-inputs')
-parser.add_argument('--pseudoinputs_mean', type=float, default=-2.0, metavar='PM',
+parser.add_argument('--pseudoinputs_mean', type=float, default=-0.05, metavar='PM',
                     help='mean for init pseudo-inputs')
-parser.add_argument('--pseudoinputs_std', type=float, default=0.05, metavar='PS',
+parser.add_argument('--pseudoinputs_std', type=float, default=0.01, metavar='PS',
                     help='std for init pseudo-inputs')
 
 # model: model name, prior
@@ -71,13 +71,13 @@ parser.add_argument('--input_type', type=str, default='continuous', metavar='IT'
                     help='type of the input: binary, gray, continuous')
 
 # experiment
-parser.add_argument('--S', type=int, default=1, metavar='SLL',
+parser.add_argument('--S', type=int, default=5000, metavar='SLL',
                     help='number of samples used for approximating log-likelihood')
 parser.add_argument('--MB', type=int, default=100, metavar='MBLL',
                     help='size of a mini-batch used for approximating log-likelihood')
 
 # dataset
-parser.add_argument('--dataset_name', type=str, default='freyfaces', metavar='DN',
+parser.add_argument('--dataset_name', type=str, default='cifar10', metavar='DN',
                     help='name of the dataset: static_mnist, dynamic_mnist, omniglot, caltech101silhouettes, histopathologyGray, freyfaces, cifar10')
 
 parser.add_argument('--dynamic_binarization', action='store_true', default=False,
@@ -97,9 +97,6 @@ kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 def run(args, kwargs):
-    if args.prior == 'standard':
-        args.number_components = 0
-
     args.model_signature = str(datetime.datetime.now())[0:19]
 
     model_name = args.dataset_name + '_' + args.model_name + '_' + args.prior + '(K_' + str(args.number_components) + ')' + '_wu(' + str(args.warmup) + ')' + '_z1_' + str(args.z1_size) + '_z2_' + str(args.z2_size)
@@ -157,8 +154,10 @@ def run(args, kwargs):
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 if __name__ == "__main__":
-
-    run(args, kwargs)
+    num_components = [10, 100, 500]
+    for C in num_components:
+        args.number_components = C
+        run(args, kwargs)
 
 # # # # # # # # # # #
 # END EXPERIMENTS # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #

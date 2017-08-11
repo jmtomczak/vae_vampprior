@@ -18,7 +18,8 @@ def load_static_mnist(args, **kwargs):
     args.input_type = 'binary'
     args.dynamic_binarization = False
 
-    args.pseudoinputs_mean = -5.0
+    args.pseudoinputs_mean = 0.05
+    args.pseudoinputs_std = 0.01
 
     # start processing
     def lines_to_np_array(lines):
@@ -60,7 +61,8 @@ def load_dynamic_mnist(args, **kwargs):
     args.input_type = 'binary'
     args.dynamic_binarization = True
 
-    args.pseudoinputs_mean = -5.0
+    args.pseudoinputs_mean = 0.05
+    args.pseudoinputs_std = 0.01
 
     # start processing
     from torchvision import datasets, transforms
@@ -120,7 +122,8 @@ def load_omniglot(args, n_validation=1345, **kwargs):
     args.input_type = 'binary'
     args.dynamic_binarization = True
 
-    args.pseudoinputs_mean = -5.0
+    args.pseudoinputs_mean = 0.05
+    args.pseudoinputs_std = 0.01
 
     # start processing
     def reshape_data(data):
@@ -171,7 +174,8 @@ def load_caltech101silhouettes(args, **kwargs):
     args.input_type = 'binary'
     args.dynamic_binarization = False
 
-    args.pseudoinputs_mean = -5.0
+    args.pseudoinputs_mean = 0.05
+    args.pseudoinputs_std = 0.01
 
     # start processing
     def reshape_data(data):
@@ -208,7 +212,8 @@ def load_histopathologyGray(args, **kwargs):
     args.input_type = 'gray'
     args.dynamic_binarization = False
 
-    args.pseudoinputs_mean = -2.0
+    args.pseudoinputs_mean = 0.2
+    args.pseudoinputs_std = 0.05
 
     # start processing
     with open('datasets/HistopathologyGray/histopathology.pkl', 'rb') as f:
@@ -242,7 +247,8 @@ def load_freyfaces(args, TRAIN = 1565, VAL = 200, TEST = 200, **kwargs):
     args.input_type = 'gray'
     args.dynamic_binarization = False
 
-    args.pseudoinputs_mean = -2.0
+    args.pseudoinputs_mean = 0.2
+    args.pseudoinputs_std = 0.05
 
     # start processing
     with open('datasets/Freyfaces/freyfaces.pkl', 'rb') as f:
@@ -284,7 +290,8 @@ def load_cifar10(args, **kwargs):
     args.input_type = 'continuous'
     args.dynamic_binarization = False
 
-    args.pseudoinputs_mean = -5.0
+    args.pseudoinputs_mean = 0.2
+    args.pseudoinputs_std = 0.05
 
     # start processing
     from torchvision import datasets, transforms
