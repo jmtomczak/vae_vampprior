@@ -53,7 +53,7 @@ class VAE(Model):
         # decoder: p(z1 | z2)
         self.p_z1_layers = nn.ModuleList()
 
-        self.p_z1_layers.append( GatedDense(self.args.z1_size, 300) )
+        self.p_z1_layers.append( GatedDense(self.args.z2_size, 300) )
 
         self.p_z1_layers.append( GatedDense(300, 300) )
 
