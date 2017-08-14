@@ -20,7 +20,7 @@ class Model(nn.Module):
     # AUXILIARY METHODS
     def add_pseudoinputs(self):
 
-        nonlinearity = nn.Hardtanh(min_value=0.0, max_val=1.0)
+        nonlinearity = nn.Hardtanh(min_val=0.0, max_val=1.0)
 
         self.means = NonLinear(self.args.number_components, np.prod(self.args.input_size), bias=False, activation=nonlinearity)
 
