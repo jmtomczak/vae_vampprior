@@ -34,7 +34,7 @@ parser.add_argument('--early_stopping_epochs', type=int, default=50, metavar='ES
                     help='number of epochs for early stopping')
 
 parser.add_argument('--warmup', type=int, default=100, metavar='WU',
-                    help='number of epochs for warmu-up')
+                    help='number of epochs for warm-up')
 
 # cuda
 parser.add_argument('--no-cuda', action='store_true', default=False,
@@ -61,7 +61,7 @@ parser.add_argument('--pseudoinputs_std', type=float, default=0.01, metavar='PS'
                     help='std for init pseudo-inputs')
 
 # model: model name, prior
-parser.add_argument('--model_name', type=str, default='convvae_2level', metavar='MN',
+parser.add_argument('--model_name', type=str, default='vae_2level', metavar='MN',
                     help='model name: vae, vae_2level, convvae, convvae_2level')
 
 parser.add_argument('--prior', type=str, default='vampprior', metavar='P',
@@ -77,7 +77,7 @@ parser.add_argument('--MB', type=int, default=100, metavar='MBLL',
                     help='size of a mini-batch used for approximating log-likelihood')
 
 # dataset
-parser.add_argument('--dataset_name', type=str, default='cifar10', metavar='DN',
+parser.add_argument('--dataset_name', type=str, default='static_mnist', metavar='DN',
                     help='name of the dataset: static_mnist, dynamic_mnist, omniglot, caltech101silhouettes, histopathologyGray, freyfaces, cifar10')
 
 parser.add_argument('--dynamic_binarization', action='store_true', default=False,
@@ -133,6 +133,7 @@ def run(args, kwargs):
         model.cuda()
 
     optimizer = AdamNormGrad(model.parameters(), lr=args.lr)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     # ======================================================================================================================
     print(args)
@@ -154,10 +155,7 @@ def run(args, kwargs):
 # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
 
 if __name__ == "__main__":
-    num_components = [10, 100, 500]
-    for C in num_components:
-        args.number_components = C
-        run(args, kwargs)
+    run(args, kwargs)
 
 # # # # # # # # # # #
 # END EXPERIMENTS # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
