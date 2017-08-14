@@ -188,7 +188,8 @@ class VAE(Model):
         if self.args.input_type == 'binary':
             x_logvar = 0.
         else:
-            x_logvar = self.p_x_logvar(z)
+            x_mean = torch.clamp(x_mean, min=0.+1./512., max=1.-1./512.)
+            x_logvar = self.p_x_logvar(h)
         return x_mean, x_logvar
 
     # the prior

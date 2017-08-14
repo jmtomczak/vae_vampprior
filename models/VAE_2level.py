@@ -43,7 +43,7 @@ class VAE(Model):
         # x
         self.q_z1_layers_x.append( GatedDense(np.prod(self.args.input_size), 300) )
         # z1
-        self.q_z1_layers_z2.append(GatedDense(self.args.z2_size, 300))
+        self.q_z1_layers_z2.append( GatedDense(self.args.z2_size, 300) )
         # joint
         self.q_z1_layers_joint.append( GatedDense(2 * 300, 300) )
 
@@ -254,6 +254,7 @@ class VAE(Model):
         if self.args.input_type == 'binary':
             x_logvar = 0.
         else:
+            x_mean = torch.clamp(x_mean, min=0.+1./512., max=1.-1./512.)
             x_logvar = self.p_x_logvar(h)
         return x_mean, x_logvar
 
