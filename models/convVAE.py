@@ -233,6 +233,7 @@ class VAE(Model):
         if self.args.input_type == 'binary':
             x_logvar = 0.
         else:
+            x_mean = torch.clamp(x_mean, min=0.+1./512., max=1.-1./512.)
             x_logvar = self.p_x_logvar(h_pixelcnn).view(-1,np.prod(self.args.input_size))
         return x_mean, x_logvar
 
