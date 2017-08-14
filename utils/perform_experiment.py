@@ -56,21 +56,19 @@ def experiment_vae(args, train_loader, val_loader, test_loader, model, optimizer
             e, args.early_stopping_epochs, best_loss
         ))
 
-
-        if epoch < args.warmup:
+        # early-stopping
+        if val_loss_epoch < best_loss:
             e = 0
+            best_loss = val_loss_epoch
+            # best_model = model
+            print('->model saved<-')
+            torch.save(model, dir + args.model_name + '.model')
         else:
-            # early-stopping
-            if val_loss_epoch < best_loss:
+            e += 1
+            if epoch < args.warmup:
                 e = 0
-                best_loss = val_loss_epoch
-                # best_model = model
-                print('->save model<-')
-                torch.save(model, dir + args.model_name + '.model')
-            else:
-                e += 1
-                if e > args.early_stopping_epochs:
-                    break
+            if e > args.early_stopping_epochs:
+                break
 
         # NaN
         if math.isnan(val_loss_epoch):
