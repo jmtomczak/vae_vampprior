@@ -183,11 +183,11 @@ def load_caltech101silhouettes(args, **kwargs):
     caltech_raw = loadmat(os.path.join('datasets', 'Caltech101Silhouettes', 'caltech101_silhouettes_28_split1.mat'))
 
     # train, validation and test data
-    x_train = reshape_data(caltech_raw['train_data'].astype('float32'))
+    x_train = 1. - reshape_data(caltech_raw['train_data'].astype('float32'))
     np.random.shuffle(x_train)
-    x_val = reshape_data(caltech_raw['val_data'].astype('float32'))
+    x_val = 1. - reshape_data(caltech_raw['val_data'].astype('float32'))
     np.random.shuffle(x_val)
-    x_test = reshape_data(caltech_raw['test_data'].astype('float32'))
+    x_test = 1. - reshape_data(caltech_raw['test_data'].astype('float32'))
 
     y_train = caltech_raw['train_labels']
     y_val = caltech_raw['val_labels']
