@@ -18,9 +18,6 @@ def load_static_mnist(args, **kwargs):
     args.input_type = 'binary'
     args.dynamic_binarization = False
 
-    args.pseudoinputs_mean = 0.05
-    args.pseudoinputs_std = 0.01
-
     # start processing
     def lines_to_np_array(lines):
         return np.array([[int(i) for i in line.split()] for line in lines])
@@ -52,6 +49,15 @@ def load_static_mnist(args, **kwargs):
     test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
+    # setting pseudo-inputs inits
+    if args.use_training_data_init:
+        args.pseudoinputs_std = 0.001
+        init = x_train[0:args.number_components].T
+        args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
+    else:
+        args.pseudoinputs_mean = 0.05
+        args.pseudoinputs_std = 0.01
+
     return train_loader, val_loader, test_loader, args
 
 # ======================================================================================================================
@@ -60,9 +66,6 @@ def load_dynamic_mnist(args, **kwargs):
     args.input_size = [1, 28, 28]
     args.input_type = 'binary'
     args.dynamic_binarization = True
-
-    args.pseudoinputs_mean = 0.05
-    args.pseudoinputs_std = 0.01
 
     # start processing
     from torchvision import datasets, transforms
@@ -113,6 +116,15 @@ def load_dynamic_mnist(args, **kwargs):
     test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
+    # setting pseudo-inputs inits
+    if args.use_training_data_init:
+        args.pseudoinputs_std = 0.001
+        init = x_train[0:args.number_components].T
+        args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
+    else:
+        args.pseudoinputs_mean = 0.05
+        args.pseudoinputs_std = 0.01
+
     return train_loader, val_loader, test_loader, args
 
 # ======================================================================================================================
@@ -121,9 +133,6 @@ def load_omniglot(args, n_validation=1345, **kwargs):
     args.input_size = [1, 28, 28]
     args.input_type = 'binary'
     args.dynamic_binarization = True
-
-    args.pseudoinputs_mean = 0.05
-    args.pseudoinputs_std = 0.01
 
     # start processing
     def reshape_data(data):
@@ -165,6 +174,15 @@ def load_omniglot(args, n_validation=1345, **kwargs):
     test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
+    # setting pseudo-inputs inits
+    if args.use_training_data_init:
+        args.pseudoinputs_std = 0.001
+        init = x_train[0:args.number_components].T
+        args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
+    else:
+        args.pseudoinputs_mean = 0.05
+        args.pseudoinputs_std = 0.01
+
     return train_loader, val_loader, test_loader, args
 
 # ======================================================================================================================
@@ -173,9 +191,6 @@ def load_caltech101silhouettes(args, **kwargs):
     args.input_size = [1, 28, 28]
     args.input_type = 'binary'
     args.dynamic_binarization = False
-
-    args.pseudoinputs_mean = 0.05
-    args.pseudoinputs_std = 0.01
 
     # start processing
     def reshape_data(data):
@@ -203,6 +218,15 @@ def load_caltech101silhouettes(args, **kwargs):
     test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
+    # setting pseudo-inputs inits
+    if args.use_training_data_init:
+        args.pseudoinputs_std = 0.001
+        init = x_train[0:args.number_components].T
+        args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
+    else:
+        args.pseudoinputs_mean = 0.8
+        args.pseudoinputs_std = 0.01
+
     return train_loader, val_loader, test_loader, args
 
 # ======================================================================================================================
@@ -211,9 +235,6 @@ def load_histopathologyGray(args, **kwargs):
     args.input_size = [1, 28, 28]
     args.input_type = 'gray'
     args.dynamic_binarization = False
-
-    args.pseudoinputs_mean = 0.2
-    args.pseudoinputs_std = 0.05
 
     # start processing
     with open('datasets/HistopathologyGray/histopathology.pkl', 'rb') as f:
@@ -238,6 +259,15 @@ def load_histopathologyGray(args, **kwargs):
     test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
+    # setting pseudo-inputs inits
+    if args.use_training_data_init:
+        args.pseudoinputs_std = 0.001
+        init = x_train[0:args.number_components].T
+        args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
+    else:
+        args.pseudoinputs_mean = 0.5
+        args.pseudoinputs_std = 0.01
+
     return train_loader, val_loader, test_loader, args
 
 # ======================================================================================================================
@@ -246,9 +276,6 @@ def load_freyfaces(args, TRAIN = 1565, VAL = 200, TEST = 200, **kwargs):
     args.input_size = [1, 28, 20]
     args.input_type = 'gray'
     args.dynamic_binarization = False
-
-    args.pseudoinputs_mean = 0.2
-    args.pseudoinputs_std = 0.05
 
     # start processing
     with open('datasets/Freyfaces/freyfaces.pkl', 'rb') as f:
@@ -281,6 +308,15 @@ def load_freyfaces(args, TRAIN = 1565, VAL = 200, TEST = 200, **kwargs):
     test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
+    # setting pseudo-inputs inits
+    if args.use_training_data_init:
+        args.pseudoinputs_std = 0.001
+        init = x_train[0:args.number_components].T
+        args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
+    else:
+        args.pseudoinputs_mean = 0.8
+        args.pseudoinputs_std = 0.01
+
     return train_loader, val_loader, test_loader, args
 
 # ======================================================================================================================
@@ -289,9 +325,6 @@ def load_cifar10(args, **kwargs):
     args.input_size = [3, 32, 32]
     args.input_type = 'continuous'
     args.dynamic_binarization = False
-
-    args.pseudoinputs_mean = 0.2
-    args.pseudoinputs_std = 0.05
 
     # start processing
     from torchvision import datasets, transforms
@@ -331,6 +364,15 @@ def load_cifar10(args, **kwargs):
 
     test = data_utils.TensorDataset(torch.from_numpy(x_test).float(), torch.from_numpy(y_test))
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
+
+    # setting pseudo-inputs inits
+    if args.use_training_data_init:
+        args.pseudoinputs_std = 0.001
+        init = x_train[0:args.number_components].T
+        args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
+    else:
+        args.pseudoinputs_mean = 0.5
+        args.pseudoinputs_std = 0.01
 
     return train_loader, val_loader, test_loader, args
 
