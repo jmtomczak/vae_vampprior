@@ -25,7 +25,10 @@ class Model(nn.Module):
         self.means = NonLinear(self.args.number_components, np.prod(self.args.input_size), bias=False, activation=nonlinearity)
 
         # init pseudoinputs
-        normal_init(self.means.linear,self.args.pseudoinputs_mean, self.args.pseudoinputs_std)
+        if self.args.use_training_data_init:
+            self.means.linear.weight.data = self.args.pseudoinputs_mean
+        else:
+            normal_init(self.means.linear, self.args.pseudoinputs_mean, self.args.pseudoinputs_std)
 
         # create an idle input for calling pseudo-inputs
         self.idle_input = Variable(torch.eye(self.args.number_components, self.args.number_components), requires_grad=False)
