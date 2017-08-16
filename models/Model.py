@@ -24,7 +24,7 @@ class Model(nn.Module):
 
         self.means = NonLinear(self.args.number_components, np.prod(self.args.input_size), bias=False, activation=nonlinearity)
 
-        # init pseudoinputs
+        # init pseudo-inputs
         if self.args.use_training_data_init:
             self.means.linear.weight.data = self.args.pseudoinputs_mean
         else:
