@@ -60,6 +60,9 @@ parser.add_argument('--pseudoinputs_mean', type=float, default=-0.05, metavar='P
 parser.add_argument('--pseudoinputs_std', type=float, default=0.01, metavar='PS',
                     help='std for init pseudo-inputs')
 
+parser.add_argument('--use_training_data_init', action='store_true', default=False,
+                    help='initialize pseudo-inputs with randomly chosen training data')
+
 # model: model name, prior
 parser.add_argument('--model_name', type=str, default='convvae_2level', metavar='MN',
                     help='model name: vae, vae_2level, convvae, convvae_2level')
