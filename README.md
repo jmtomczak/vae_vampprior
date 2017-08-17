@@ -39,5 +39,8 @@ Please cite our paper if you use this code in your research:
 }
 ```
 
+## TODO
+* CIFAR 10 is not working properly (`NaN` after some epochs).
+
 ## Acknowledgments
 The research conducted by Jakub M. Tomczak was funded by the European Commission within the Marie Skłodowska-Curie Individual Fellowship (Grant No. 702666, ”Deep learning and Bayesian inference for medical imaging”).
