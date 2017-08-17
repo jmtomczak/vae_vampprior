@@ -3,19 +3,18 @@ This is a PyTorch implementation of a new prior ("Variational Mixture of Posteri
 * Jakub M. Tomczak, Max Welling, VAE with a VampPrior, [arXiv preprint](https://arxiv.org/abs/1705.07120), 2017
 
 ## Requirements
-In order to run the code please install:
+The code is compatible with:
 * `pytorch 0.2.0`
-* `numpy`
-* `scipy`
 
 ## Data
-The experiments can be run on four datasets:
+The experiments can be run on the following datasets:
 * static MNIST: links to the datasets can found at [link](https://github.com/yburda/iwae/tree/master/datasets/BinaryMNIST);
 * binary MNIST: the dataset is loaded from PyTorch;
 * OMNIGLOT: the dataset could be downloaded from [link](https://github.com/yburda/iwae/blob/master/datasets/OMNIGLOT/chardata.mat);
 * Caltech 101 Silhouettes: the dataset could be downloaded from [link](https://people.cs.umass.edu/~marlin/data/caltech101_silhouettes_28_split1.mat).
 * Frey Faces: the dataset could be downloaded from [link](https://github.com/y0ast/Variational-Autoencoder/blob/master/freyfaces.pkl).
-* Histopathology Gray: the dataset could be downloaded from [link](https://github.com/jmtomczak/vae_householder_flow/tree/master/datasets/histopathologyGray).
+* Histopathology Gray: the dataset could be downloaded from [link](https://github.com/jmtomczak/vae_householder_flow/tree/master/datasets/histopathologyGray);
+* CIFAR 10: the dataset is loaded from PyTorch.
 
 ## Run the experiment
 1. Set-up your experiment in `experiment.py`.
