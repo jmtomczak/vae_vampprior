@@ -51,7 +51,7 @@ def load_static_mnist(args, **kwargs):
 
     # setting pseudo-inputs inits
     if args.use_training_data_init:
-        args.pseudoinputs_std = 0.001
+        args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
     else:
@@ -118,7 +118,7 @@ def load_dynamic_mnist(args, **kwargs):
 
     # setting pseudo-inputs inits
     if args.use_training_data_init:
-        args.pseudoinputs_std = 0.001
+        args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
     else:
@@ -176,7 +176,7 @@ def load_omniglot(args, n_validation=1345, **kwargs):
 
     # setting pseudo-inputs inits
     if args.use_training_data_init:
-        args.pseudoinputs_std = 0.001
+        args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
     else:
@@ -220,7 +220,7 @@ def load_caltech101silhouettes(args, **kwargs):
 
     # setting pseudo-inputs inits
     if args.use_training_data_init:
-        args.pseudoinputs_std = 0.001
+        args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
     else:
@@ -261,7 +261,7 @@ def load_histopathologyGray(args, **kwargs):
 
     # setting pseudo-inputs inits
     if args.use_training_data_init:
-        args.pseudoinputs_std = 0.001
+        args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
     else:
@@ -310,7 +310,7 @@ def load_freyfaces(args, TRAIN = 1565, VAL = 200, TEST = 200, **kwargs):
 
     # setting pseudo-inputs inits
     if args.use_training_data_init:
-        args.pseudoinputs_std = 0.001
+        args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
     else:
@@ -367,7 +367,7 @@ def load_cifar10(args, **kwargs):
 
     # setting pseudo-inputs inits
     if args.use_training_data_init:
-        args.pseudoinputs_std = 0.001
+        args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
     else:
