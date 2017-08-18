@@ -193,13 +193,29 @@ class VAE(Model):
 
         for i in range(self.args.input_size[1]):
             for j in range(self.args.input_size[2]):
-                samples_rand, _ = self.p_x(Variable(x_zeros, volatile=True), z_sample_rand)
-                samples_rand = samples_rand.view(samples_rand.size(0), self.args.input_size[0], self.args.input_size[1], self.args.input_size[2])
+                samples_mean, samples_logvar = self.p_x(Variable(x_zeros, volatile=True), z_sample_rand)
+                samples_mean = samples_mean.view(samples_mean.size(0), self.args.input_size[0],
+                                                 self.args.input_size[1], self.args.input_size[2])
 
-                probs = samples_rand[:, :, i, j].data
-                x_zeros[:, :, i, j] = torch.bernoulli(probs).float()
+                if self.args.input_type == 'binary':
+                    probs = samples_mean[:, :, i, j].data
+                    x_zeros[:, :, i, j] = torch.bernoulli(probs).float()
+                    samples_gen = samples_mean
 
-        return samples_rand
+                elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
+                    binsize = 1. / 256.
+                    samples_logvar = samples_logvar.view(samples_mean.size(0), self.args.input_size[0],
+                                                         self.args.input_size[1], self.args.input_size[2])
+                    means = samples_mean[:, :, i, j].data
+                    logvar = samples_logvar[:, :, i, j].data
+                    # sample from logistic distribution
+                    u = torch.rand(means.size()).cuda()
+                    y = torch.log(u) - torch.log(1. - u)
+                    sample = means + torch.exp(logvar) * y
+                    x_zeros[:, :, i, j] = torch.floor(sample / binsize) * binsize
+                    samples_gen = samples_mean
+
+        return samples_gen
 
     def reconstruct_x(self, x):
         x_mean, _, _, _, _ = self.forward(x)

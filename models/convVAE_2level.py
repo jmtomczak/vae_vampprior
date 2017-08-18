@@ -245,14 +245,7 @@ class VAE(Model):
                     x_zeros[:, :, i, j] = torch.bernoulli(probs).float()
                     samples_gen = samples_mean
 
-                elif self.args.input_type == 'continuous':
-                    samples_logvar = samples_logvar.view(samples_mean.size(0), self.args.input_size[0], self.args.input_size[1], self.args.input_size[2])
-                    means = samples_mean[:, :, i, j].data
-                    logvar = samples_logvar[:, :, i, j].data
-                    x_zeros[:, :, i, j] = torch.normal(means,torch.sqrt(torch.exp(logvar))).float()
-                    samples_gen = samples_mean
-
-                elif self.args.input_type == 'gray':
+                elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
                     binsize = 1./256.
                     samples_logvar = samples_logvar.view(samples_mean.size(0), self.args.input_size[0], self.args.input_size[1], self.args.input_size[2])
                     means = samples_mean[:, :, i, j].data
@@ -261,7 +254,7 @@ class VAE(Model):
                     u = torch.rand(means.size()).cuda()
                     y = torch.log(u) - torch.log(1.-u)
                     sample = means + torch.exp(logvar) * y
-                    x_zeros[:, :, i, j] = sample#torch.floor(sample / binsize) * binsize
+                    x_zeros[:, :, i, j] = torch.floor(sample / binsize) * binsize
                     samples_gen = samples_mean
 
         return samples_gen
