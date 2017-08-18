@@ -265,8 +265,8 @@ def load_histopathologyGray(args, **kwargs):
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
     else:
-        args.pseudoinputs_mean = 0.5
-        args.pseudoinputs_std = 0.01
+        args.pseudoinputs_mean = 0.4
+        args.pseudoinputs_std = 0.05
 
     return train_loader, val_loader, test_loader, args
 
@@ -371,8 +371,8 @@ def load_cifar10(args, **kwargs):
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
     else:
-        args.pseudoinputs_mean = 0.5
-        args.pseudoinputs_std = 0.01
+        args.pseudoinputs_mean = 0.4
+        args.pseudoinputs_std = 0.05
 
     return train_loader, val_loader, test_loader, args
 
