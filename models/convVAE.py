@@ -175,25 +175,15 @@ class VAE(Model):
         return lower_bound
 
     # ADDITIONAL METHODS
-    def generate_x(self, N=25):
-        if self.args.prior == 'standard':
-            z_sample_rand = Variable( torch.FloatTensor(N, self.args.z1_size).normal_() )
-            if self.args.cuda:
-                z_sample_rand = z_sample_rand.cuda()
-
-        elif self.args.prior == 'vampprior':
-            means = self.means(self.idle_input)[0:N].view(-1,self.args.input_size[0],self.args.input_size[1],self.args.input_size[2])
-            z_sample_gen_mean, z_sample_gen_logvar = self.q_z(means)
-            z_sample_rand = self.reparameterize(z_sample_gen_mean, z_sample_gen_logvar)
-
+    def pixelcnn_generate(self, z):
         # sample from PixelCNN
-        x_zeros = torch.zeros((z_sample_rand.size(0), self.args.input_size[0], self.args.input_size[1], self.args.input_size[2]))
+        x_zeros = torch.zeros((z.size(0), self.args.input_size[0], self.args.input_size[1], self.args.input_size[2]))
         if self.args.cuda:
             x_zeros = x_zeros.cuda()
 
         for i in range(self.args.input_size[1]):
             for j in range(self.args.input_size[2]):
-                samples_mean, samples_logvar = self.p_x(Variable(x_zeros, volatile=True), z_sample_rand)
+                samples_mean, samples_logvar = self.p_x(Variable(x_zeros, volatile=True), z)
                 samples_mean = samples_mean.view(samples_mean.size(0), self.args.input_size[0],
                                                  self.args.input_size[1], self.args.input_size[2])
 
@@ -217,9 +207,33 @@ class VAE(Model):
 
         return samples_gen
 
+    def generate_x(self, N=25):
+        # Sampling z from a prior
+        if self.args.prior == 'standard':
+            z_sample_rand = Variable( torch.FloatTensor(N, self.args.z1_size).normal_() )
+            if self.args.cuda:
+                z_sample_rand = z_sample_rand.cuda()
+
+        elif self.args.prior == 'vampprior':
+            means = self.means(self.idle_input)[0:N].view(-1,self.args.input_size[0],self.args.input_size[1],self.args.input_size[2])
+            z_sample_gen_mean, z_sample_gen_logvar = self.q_z(means)
+            z_sample_rand = self.reparameterize(z_sample_gen_mean, z_sample_gen_logvar)
+
+        # Sampling from PixelCNN
+        samples_gen = self.pixelcnn_generate(z_sample_rand)
+
+        return samples_gen
+
     def reconstruct_x(self, x):
-        x_mean, _, _, _, _ = self.forward(x)
-        return x_mean
+        if self.args.prior == 'standard':
+            x_reconstructed, _, _, _, _ = self.forward(x)
+        elif self.args.prior == 'vampprior':
+            _, _, z, _, _ = self.forward(x)
+            x_reconstructed = self.pixelcnn_generate(z)
+        else:
+            raise Exception('wrong name of the prior')
+
+        return x_reconstructed
 
     # THE MODEL: VARIATIONAL POSTERIOR
     def q_z(self, x):

@@ -216,7 +216,41 @@ class VAE(Model):
         return lower_bound
 
     # ADDITIONAL METHODS
+    def pixelcnn_generate(self, z1, z2):
+        # Sampling from PixelCNN
+        x_zeros = torch.zeros(
+            (z1.size(0), self.args.input_size[0], self.args.input_size[1], self.args.input_size[2]))
+        if self.args.cuda:
+            x_zeros = x_zeros.cuda()
+
+        for i in range(self.args.input_size[1]):
+            for j in range(self.args.input_size[2]):
+                samples_mean, samples_logvar = self.p_x(Variable(x_zeros, volatile=True), z1, z2)
+                samples_mean = samples_mean.view(samples_mean.size(0), self.args.input_size[0], self.args.input_size[1],
+                                                 self.args.input_size[2])
+
+                if self.args.input_type == 'binary':
+                    probs = samples_mean[:, :, i, j].data
+                    x_zeros[:, :, i, j] = torch.bernoulli(probs).float()
+                    samples_gen = samples_mean
+
+                elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
+                    binsize = 1. / 256.
+                    samples_logvar = samples_logvar.view(samples_mean.size(0), self.args.input_size[0],
+                                                         self.args.input_size[1], self.args.input_size[2])
+                    means = samples_mean[:, :, i, j].data
+                    logvar = samples_logvar[:, :, i, j].data
+                    # sample from logistic distribution
+                    u = torch.rand(means.size()).cuda()
+                    y = torch.log(u) - torch.log(1. - u)
+                    sample = means + torch.exp(logvar) * y
+                    x_zeros[:, :, i, j] = torch.floor(sample / binsize) * binsize
+                    samples_gen = samples_mean
+
+        return samples_gen
+
     def generate_x(self, N=25):
+        # Sampling z2 from a prior
         if self.args.prior == 'standard':
             z2_sample_rand = Variable( torch.FloatTensor(N, self.args.z1_size).normal_() )
             if self.args.cuda:
@@ -227,41 +261,25 @@ class VAE(Model):
             z2_sample_gen_mean, z2_sample_gen_logvar = self.q_z2(means)
             z2_sample_rand = self.reparameterize(z2_sample_gen_mean, z2_sample_gen_logvar)
 
+        # Sampling z1 from a model
         z1_sample_mean, z1_sample_logvar = self.p_z1(z2_sample_rand)
         z1_sample_rand = self.reparameterize(z1_sample_mean, z1_sample_logvar)
 
-        # sample from PixelCNN
-        x_zeros = torch.zeros((z1_sample_rand.size(0), self.args.input_size[0], self.args.input_size[1], self.args.input_size[2]))
-        if self.args.cuda:
-            x_zeros = x_zeros.cuda()
-
-        for i in range(self.args.input_size[1]):
-            for j in range(self.args.input_size[2]):
-                samples_mean, samples_logvar = self.p_x(Variable(x_zeros, volatile=True), z1_sample_rand, z2_sample_rand)
-                samples_mean = samples_mean.view(samples_mean.size(0), self.args.input_size[0], self.args.input_size[1], self.args.input_size[2])
-
-                if self.args.input_type == 'binary':
-                    probs = samples_mean[:, :, i, j].data
-                    x_zeros[:, :, i, j] = torch.bernoulli(probs).float()
-                    samples_gen = samples_mean
-
-                elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
-                    binsize = 1./256.
-                    samples_logvar = samples_logvar.view(samples_mean.size(0), self.args.input_size[0], self.args.input_size[1], self.args.input_size[2])
-                    means = samples_mean[:, :, i, j].data
-                    logvar = samples_logvar[:, :, i, j].data
-                    # sample from logistic distribution
-                    u = torch.rand(means.size()).cuda()
-                    y = torch.log(u) - torch.log(1.-u)
-                    sample = means + torch.exp(logvar) * y
-                    x_zeros[:, :, i, j] = torch.floor(sample / binsize) * binsize
-                    samples_gen = samples_mean
+        # Sampling from PixelCNN
+        samples_gen = self.pixelcnn_generate(z1_sample_rand, z2_sample_rand)
 
         return samples_gen
 
     def reconstruct_x(self, x):
-        x_mean, _, _, _, _, _, _, _, _, _ = self.forward(x)
-        return x_mean
+        if self.args.prior == 'standard':
+            x_reconstructed, _, _, _, _, _, _, _, _, _ = self.forward(x)
+        elif self.args.prior == 'vampprior':
+            _, _, z1, _, _, z2, _, _, _, _ = self.forward(x)
+            x_reconstructed = self.pixelcnn_generate(z1, z2)
+        else:
+            raise Exception('wrong name of the prior')
+
+        return x_reconstructed
 
     # THE MODEL: VARIATIONAL POSTERIOR
     def q_z2(self, x):
