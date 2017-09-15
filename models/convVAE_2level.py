@@ -271,13 +271,8 @@ class VAE(Model):
         return samples_gen
 
     def reconstruct_x(self, x):
-        if self.args.prior == 'standard':
-            x_reconstructed, _, _, _, _, _, _, _, _, _ = self.forward(x)
-        elif self.args.prior == 'vampprior':
-            _, _, z1, _, _, z2, _, _, _, _ = self.forward(x)
-            x_reconstructed = self.pixelcnn_generate(z1, z2)
-        else:
-            raise Exception('wrong name of the prior')
+        _, _, z1, _, _, z2, _, _, _, _ = self.forward(x)
+        x_reconstructed = self.pixelcnn_generate(z1, z2)
 
         return x_reconstructed
 
