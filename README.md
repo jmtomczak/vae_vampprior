@@ -23,7 +23,7 @@ The experiments can be run on the following datasets:
 python experiment.py
 ```
 ## Models
-You can run a vanilla VAE, a one-layered VAE or a two-layered HVAE with the standard prior or the VampPrior by setting `model_name` argument to either: (i) `vae` or `hvae_2level` for MLP, (ii) 'convvae_2level` for convnets, (iii) 'pixelhvae_2level' for (ii) with a PixelCNN-based decoder, and specifying `prior` argument to either `standard` or `vampprior`.
+You can run a vanilla VAE, a one-layered VAE or a two-layered HVAE with the standard prior or the VampPrior by setting `model_name` argument to either: (i) `vae` or `hvae_2level` for MLP, (ii) `convvae_2level` for convnets, (iii) `pixelhvae_2level` for (ii) with a PixelCNN-based decoder, and specifying `prior` argument to either `standard` or `vampprior`.
 
 ## Citation
 
