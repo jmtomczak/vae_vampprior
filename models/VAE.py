@@ -26,21 +26,19 @@ class VAE(Model):
         super(VAE, self).__init__(args)
 
         # encoder: q(z | x)
-        self.q_z_layers = nn.ModuleList()
-
-        self.q_z_layers.append( GatedDense(np.prod(self.args.input_size), 300) )
-
-        self.q_z_layers.append( GatedDense(300, 300) )
+        self.q_z_layers = nn.Sequential(
+            GatedDense(np.prod(self.args.input_size), 300),
+            GatedDense(300, 300)
+        )
 
         self.q_z_mean = Linear(300, self.args.z1_size)
         self.q_z_logvar = NonLinear(300, self.args.z1_size, activation=nn.Hardtanh(min_val=-6.,max_val=2.))
 
         # decoder: p(x | z)
-        self.p_x_layers = nn.ModuleList()
-
-        self.p_x_layers.append( GatedDense(self.args.z1_size, 300) )
-
-        self.p_x_layers.append( GatedDense(300, 300) )
+        self.p_x_layers = nn.Sequential(
+            GatedDense(self.args.z1_size, 300),
+            GatedDense(300, 300)
+        )
 
         if self.args.input_type == 'binary':
             self.p_x_mean = NonLinear(300, np.prod(self.args.input_size), activation=nn.Sigmoid())
@@ -172,8 +170,7 @@ class VAE(Model):
 
     # THE MODEL: VARIATIONAL POSTERIOR
     def q_z(self, x):
-        for i in range(len(self.q_z_layers)):
-            x = self.q_z_layers[i](x)
+        x = self.q_z_layers(x)
 
         z_q_mean = self.q_z_mean(x)
         z_q_logvar = self.q_z_logvar(x)
@@ -181,8 +178,7 @@ class VAE(Model):
 
     # THE MODEL: GENERATIVE DISTRIBUTION
     def p_x(self, z):
-        for j in range(len(self.p_x_layers)):
-            z = self.p_x_layers[j](z)
+        z = self.p_x_layers(z)
 
         x_mean = self.p_x_mean(z)
         if self.args.input_type == 'binary':

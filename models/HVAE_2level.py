@@ -27,50 +27,47 @@ class VAE(Model):
         self.args = args
 
         # encoder: q(z2 | x)
-        self.q_z2_layers = nn.ModuleList()
-
-        self.q_z2_layers.append( GatedDense(np.prod(self.args.input_size), 300) )
-        self.q_z2_layers.append( GatedDense(300, 300) )
+        self.q_z2_layers = nn.Sequential(
+            GatedDense(np.prod(self.args.input_size), 300),
+            GatedDense(300, 300)
+        )
 
         self.q_z2_mean = Linear(300, self.args.z2_size)
         self.q_z2_logvar = NonLinear(300, self.args.z2_size, activation=nn.Hardtanh(min_val=-6.,max_val=2.))
 
         # encoder: q(z1 | x, z2)
-        self.q_z1_layers_x = nn.ModuleList()
-        self.q_z1_layers_z2 = nn.ModuleList()
-        self.q_z1_layers_joint = nn.ModuleList()
-
-        # x
-        self.q_z1_layers_x.append( GatedDense(np.prod(self.args.input_size), 300) )
-        # z1
-        self.q_z1_layers_z2.append( GatedDense(self.args.z2_size, 300) )
-        # joint
-        self.q_z1_layers_joint.append( GatedDense(2 * 300, 300) )
+        self.q_z1_layers_x = nn.Sequential(
+            GatedDense(np.prod(self.args.input_size), 300)
+        )
+        self.q_z1_layers_z2 = nn.Sequential(
+            GatedDense(self.args.z2_size, 300)
+        )
+        self.q_z1_layers_joint = nn.Sequential(
+            GatedDense(2 * 300, 300)
+        )
 
         self.q_z1_mean = Linear(300, self.args.z1_size)
         self.q_z1_logvar = NonLinear(300, self.args.z1_size, activation=nn.Hardtanh(min_val=-6.,max_val=2.))
 
         # decoder: p(z1 | z2)
-        self.p_z1_layers = nn.ModuleList()
-
-        self.p_z1_layers.append( GatedDense(self.args.z2_size, 300) )
-
-        self.p_z1_layers.append( GatedDense(300, 300) )
+        self.p_z1_layers = nn.Sequential(
+            GatedDense(self.args.z2_size, 300),
+            GatedDense(300, 300)
+        )
 
         self.p_z1_mean = Linear(300, self.args.z1_size)
         self.p_z1_logvar = NonLinear(300, self.args.z1_size, activation=nn.Hardtanh(min_val=-6.,max_val=2.))
 
         # decoder: p(x | z1, z2)
-        self.p_x_layers_z1 = nn.ModuleList()
-        self.p_x_layers_z2 = nn.ModuleList()
-        self.p_x_layers_joint = nn.ModuleList()
-
-        # z1
-        self.p_x_layers_z1.append( GatedDense(self.args.z1_size, 300) )
-        # z2
-        self.p_x_layers_z2.append( GatedDense(self.args.z2_size, 300) )
-        # joint
-        self.p_x_layers_joint.append( GatedDense(2 * 300, 300) )
+        self.p_x_layers_z1 = nn.Sequential(
+            GatedDense(self.args.z1_size, 300)
+        )
+        self.p_x_layers_z2 = nn.Sequential(
+            GatedDense(self.args.z2_size, 300)
+        )
+        self.p_x_layers_joint = nn.Sequential(
+            GatedDense(2 * 300, 300)
+        )
 
         if self.args.input_type == 'binary':
             self.p_x_mean = NonLinear(300, np.prod(self.args.input_size), activation=nn.Sigmoid())
@@ -206,24 +203,20 @@ class VAE(Model):
 
     # THE MODEL: VARIATIONAL POSTERIOR
     def q_z2(self, x):
-        for i in range(len(self.q_z2_layers)):
-            x = self.q_z2_layers[i](x)
+        x = self.q_z2_layers(x)
 
         z2_q_mean = self.q_z2_mean(x)
         z2_q_logvar = self.q_z2_logvar(x)
         return z2_q_mean, z2_q_logvar
 
     def q_z1(self, x, z2):
-        for i in range(len(self.q_z1_layers_x)):
-            x = self.q_z1_layers_x[i](x)
+        x = self.q_z1_layers_x(x)
 
-        for j in range(len(self.q_z1_layers_z2)):
-            z2 = self.q_z1_layers_z2[j](z2)
+        z2 = self.q_z1_layers_z2(z2)
 
         h = torch.cat((x,z2), 1)
 
-        for k in range(len(self.q_z1_layers_joint)):
-            h = self.q_z1_layers_joint[k](h)
+        h = self.q_z1_layers_joint(h)
 
         z1_q_mean = self.q_z1_mean(h)
         z1_q_logvar = self.q_z1_logvar(h)
@@ -231,24 +224,20 @@ class VAE(Model):
 
     # THE MODEL: GENERATIVE DISTRIBUTION
     def p_z1(self, z2):
-        for i in range(len(self.p_z1_layers)):
-            z2 = self.p_z1_layers[i](z2)
+        z2 = self.p_z1_layers(z2)
 
         z1_mean = self.p_z1_mean(z2)
         z1_logvar = self.p_z1_logvar(z2)
         return z1_mean, z1_logvar
 
     def p_x(self, z1, z2):
-        for i in range(len(self.p_x_layers_z1)):
-            z1 = self.p_x_layers_z1[i](z1)
+        z1 = self.p_x_layers_z1(z1)
 
-        for j in range(len(self.p_x_layers_z2)):
-            z2 = self.p_x_layers_z2[j](z2)
+        z2 = self.p_x_layers_z2(z2)
 
         h = torch.cat((z1, z2), 1)
 
-        for k in range(len(self.p_x_layers_joint)):
-            h = self.p_x_layers_joint[k](h)
+        h = self.p_x_layers_joint(h)
 
         x_mean = self.p_x_mean(h)
         if self.args.input_type == 'binary':
