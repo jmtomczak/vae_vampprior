@@ -50,7 +50,7 @@ def load_static_mnist(args, **kwargs):
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
     # setting pseudo-inputs inits
-    if args.use_training_data_init:
+    if args.use_training_data_init == 1:
         args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
@@ -117,7 +117,7 @@ def load_dynamic_mnist(args, **kwargs):
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=False, **kwargs)
 
     # setting pseudo-inputs inits
-    if args.use_training_data_init:
+    if args.use_training_data_init == 1:
         args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
@@ -175,7 +175,7 @@ def load_omniglot(args, n_validation=1345, **kwargs):
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
     # setting pseudo-inputs inits
-    if args.use_training_data_init:
+    if args.use_training_data_init == 1:
         args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
@@ -219,13 +219,13 @@ def load_caltech101silhouettes(args, **kwargs):
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
     # setting pseudo-inputs inits
-    if args.use_training_data_init:
+    if args.use_training_data_init == 1:
         args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
     else:
-        args.pseudoinputs_mean = 0.8
-        args.pseudoinputs_std = 0.01
+        args.pseudoinputs_mean = 0.5
+        args.pseudoinputs_std = 0.02
 
     return train_loader, val_loader, test_loader, args
 
@@ -260,7 +260,7 @@ def load_histopathologyGray(args, **kwargs):
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
     # setting pseudo-inputs inits
-    if args.use_training_data_init:
+    if args.use_training_data_init == 1:
         args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
@@ -309,13 +309,13 @@ def load_freyfaces(args, TRAIN = 1565, VAL = 200, TEST = 200, **kwargs):
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
     # setting pseudo-inputs inits
-    if args.use_training_data_init:
+    if args.use_training_data_init == 1:
         args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
     else:
-        args.pseudoinputs_mean = 0.8
-        args.pseudoinputs_std = 0.01
+        args.pseudoinputs_mean = 0.5
+        args.pseudoinputs_std = 0.02
 
     return train_loader, val_loader, test_loader, args
 
@@ -366,7 +366,7 @@ def load_cifar10(args, **kwargs):
     test_loader = data_utils.DataLoader(test, batch_size=args.test_batch_size, shuffle=True, **kwargs)
 
     # setting pseudo-inputs inits
-    if args.use_training_data_init:
+    if args.use_training_data_init == 1:
         args.pseudoinputs_std = 0.01
         init = x_train[0:args.number_components].T
         args.pseudoinputs_mean = torch.from_numpy( init + args.pseudoinputs_std * np.random.randn(np.prod(args.input_size), args.number_components) ).float()
