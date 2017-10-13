@@ -57,11 +57,9 @@ class VAE(Model):
         self.q_z1_layers_z2 = nn.Sequential(
             GatedDense(self.args.z2_size, h_size)
         )
-        # PROCESSING JOINT
         self.q_z1_layers_joint = nn.Sequential(
             GatedDense(2 * h_size, 300)
         )
-        # linear layers
         self.q_z1_mean = NonLinear(300, self.args.z1_size, activation=None)
         self.q_z1_logvar = NonLinear(300, self.args.z1_size, activation=nn.Hardtanh(min_val=-6., max_val=2.))
 
