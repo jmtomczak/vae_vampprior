@@ -64,8 +64,8 @@ parser.add_argument('--use_training_data_init', action='store_true', default=Fal
                     help='initialize pseudo-inputs with randomly chosen training data')
 
 # model: model name, prior
-parser.add_argument('--model_name', type=str, default='convvae_2level', metavar='MN',
-                    help='model name: vae, vae_2level, convvae, convvae_2level')
+parser.add_argument('--model_name', type=str, default='vae', metavar='MN',
+                    help='model name: vae, hvae_2level, convhvae_2level, pixelhvae_2level')
 
 parser.add_argument('--prior', type=str, default='vampprior', metavar='P',
                     help='prior: standard, vampprior')
@@ -80,7 +80,7 @@ parser.add_argument('--MB', type=int, default=100, metavar='MBLL',
                     help='size of a mini-batch used for approximating log-likelihood')
 
 # dataset
-parser.add_argument('--dataset_name', type=str, default='static_mnist', metavar='DN',
+parser.add_argument('--dataset_name', type=str, default='freyfaces', metavar='DN',
                     help='name of the dataset: static_mnist, dynamic_mnist, omniglot, caltech101silhouettes, histopathologyGray, freyfaces, cifar10')
 
 parser.add_argument('--dynamic_binarization', action='store_true', default=False,
@@ -106,7 +106,7 @@ def run(args, kwargs):
 
     # DIRECTORY FOR SAVING
     snapshots_path = 'snapshots/'
-    dir = snapshots_path + model_name + '_' + args.model_signature + '/'
+    dir = snapshots_path + args.model_signature + '_' + model_name +  '/'
 
     if not os.path.exists(dir):
         os.makedirs(dir)
@@ -122,12 +122,12 @@ def run(args, kwargs):
     # importing model
     if args.model_name == 'vae':
         from models.VAE import VAE
-    elif args.model_name == 'vae_2level':
-        from models.VAE_2level import VAE
-    elif args.model_name == 'convvae':
-        from models.convVAE import VAE
-    elif args.model_name == 'convvae_2level':
-        from models.convVAE_2level import VAE
+    elif args.model_name == 'hvae_2level':
+        from models.HVAE_2level import VAE
+    elif args.model_name == 'convhvae_2level':
+        from models.convHVAE_2level import VAE
+    elif args.model_name == 'pixelhvae_2level':
+        from models.PixelHVAE_2level import VAE
     else:
         raise Exception('Wrong name of the model!')
 
