@@ -15,7 +15,7 @@ from torch.autograd import Variable
 from utils.distributions import log_Bernoulli, log_Normal_diag, log_Normal_standard, log_Logistic_256
 from utils.visual_evaluation import plot_histogram
 from utils.nn import he_init, GatedDense, NonLinear, \
-    Conv2d, GatedConv2d, MaskedConv2d
+    Conv2d, GatedConv2d, MaskedConv2d, ResUnitBN, MaskedGatedConv2d
 
 from Model import Model
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -33,82 +33,72 @@ class VAE(Model):
             h_size = 294
 
         # encoder: q(z2 | x)
-        self.q_z2_layers = nn.ModuleList()
-
-        # conv 0
-        self.q_z2_layers.append(GatedConv2d(self.args.input_size[0], 32, 5, 1, 3))
-        # conv 1
-        self.q_z2_layers.append(GatedConv2d(32, 32, 5, 2, 1))
-        # conv 2
-        self.q_z2_layers.append(GatedConv2d(32, 64, 5, 1, 3))
-        # conv 3
-        self.q_z2_layers.append(GatedConv2d(64, 64, 5, 2, 1))
-        # conv 4
-        self.q_z2_layers.append(GatedConv2d(64, 6, 3, 1, 1))
-
+        self.q_z2_layers = nn.Sequential(
+            GatedConv2d(self.args.input_size[0], 32, 7, 1, 3),
+            GatedConv2d(32, 32, 3, 2, 1),
+            GatedConv2d(32, 64, 5, 1, 2),
+            GatedConv2d(64, 64, 3, 2, 1),
+            GatedConv2d(64, 6, 3, 1, 1)
+        )
         # linear layers
         self.q_z2_mean = NonLinear(h_size, self.args.z2_size, activation=None)
         self.q_z2_logvar = NonLinear(h_size, self.args.z2_size, activation=nn.Hardtanh(min_val=-6., max_val=2.))
 
         # encoder: q(z1|x,z2)
-        self.q_z1_layers_x = nn.ModuleList()
-        self.q_z1_layers_z2 = nn.ModuleList()
-        self.q_z1_layers_joint = nn.ModuleList()
-
         # PROCESSING x
-        # conv 0
-        self.q_z1_layers_x.append(GatedConv2d(self.args.input_size[0], 32, 5, 1, 3))
-        # conv 1
-        self.q_z1_layers_x.append(GatedConv2d(32, 32, 5, 2, 1))
-        # conv 2
-        self.q_z1_layers_x.append(GatedConv2d(32, 64, 5, 1, 3))
-        # conv 3
-        self.q_z1_layers_x.append(GatedConv2d(64, 64, 5, 2, 1))
-        # conv 7
-        self.q_z1_layers_x.append(GatedConv2d(64, 6, 3, 1, 1))
-
+        self.q_z1_layers_x = nn.Sequential(
+            GatedConv2d(self.args.input_size[0], 32, 3, 1, 1),
+            GatedConv2d(32, 32, 3, 2, 1),
+            GatedConv2d(32, 64, 3, 1, 1),
+            GatedConv2d(64, 64, 3, 2, 1),
+            GatedConv2d(64, 6, 3, 1, 1)
+        )
         # PROCESSING Z2
-        self.q_z1_layers_z2.append(GatedDense(self.args.z2_size, h_size))
-
+        self.q_z1_layers_z2 = nn.Sequential(
+            GatedDense(self.args.z2_size, h_size)
+        )
         # PROCESSING JOINT
-        self.q_z1_layers_joint.append(GatedDense(2 * h_size, 300))
-
+        self.q_z1_layers_joint = nn.Sequential(
+            GatedDense(2 * h_size, 300)
+        )
         # linear layers
         self.q_z1_mean = NonLinear(300, self.args.z1_size, activation=None)
         self.q_z1_logvar = NonLinear(300, self.args.z1_size, activation=nn.Hardtanh(min_val=-6., max_val=2.))
 
         # decoder p(z1|z2)
-        self.p_z1_layers = nn.ModuleList()
-        self.p_z1_layers.append( GatedDense(self.args.z2_size, 300))
-        self.p_z1_layers.append( GatedDense(300, 300))
-
+        self.p_z1_layers = nn.Sequential(
+            GatedDense(self.args.z2_size, 300),
+            GatedDense(300, 300)
+        )
         self.p_z1_mean = NonLinear(300, self.args.z1_size, activation=None)
         self.p_z1_logvar = NonLinear(300, self.args.z1_size, activation=nn.Hardtanh(min_val=-6., max_val=2.))
 
         # decoder: p(x | z)
-        self.p_x_layers_z1 = nn.ModuleList()
-        self.p_x_layers_z2 = nn.ModuleList()
-
-        self.p_x_layers_z1.append( GatedDense(self.args.z1_size, np.prod(self.args.input_size)) )
-        self.p_x_layers_z2.append( GatedDense(self.args.z2_size, np.prod(self.args.input_size)) )
+        self.p_x_layers_z1 = nn.Sequential(
+            GatedDense(self.args.z1_size, np.prod(self.args.input_size))
+        )
+        self.p_x_layers_z2 = nn.Sequential(
+            GatedDense(self.args.z2_size, np.prod(self.args.input_size))
+        )
 
         # PixelCNN
-        act = nn.ReLU()
+        act = nn.ReLU(True)
         self.pixelcnn = nn.Sequential(
-            MaskedConv2d('A', self.args.input_size[0] + 2*self.args.input_size[0], 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
-            MaskedConv2d('B', 64, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
-            MaskedConv2d('B', 64, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
-            MaskedConv2d('B', 64, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
-            MaskedConv2d('B', 64, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
-            MaskedConv2d('B', 64, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
-            MaskedConv2d('B', 64, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act,
-            MaskedConv2d('B', 64, 64, 5, 1, 2, bias=True), nn.BatchNorm2d(64), act )
+            MaskedConv2d('A', self.args.input_size[0] + 2*self.args.input_size[0], 64, 3, 1, 1, bias=False), nn.BatchNorm2d(64), act,
+            MaskedConv2d('B', 64, 64, 3, 1, 1, bias=False), nn.BatchNorm2d(64), act,
+            MaskedConv2d('B', 64, 64, 3, 1, 1, bias=False), nn.BatchNorm2d(64), act,
+            MaskedConv2d('B', 64, 64, 3, 1, 1, bias=False), nn.BatchNorm2d(64), act,
+            MaskedConv2d('B', 64, 64, 3, 1, 1, bias=False), nn.BatchNorm2d(64), act,
+            MaskedConv2d('B', 64, 64, 3, 1, 1, bias=False), nn.BatchNorm2d(64), act,
+            MaskedConv2d('B', 64, 64, 3, 1, 1, bias=False), nn.BatchNorm2d(64), act,
+            MaskedConv2d('B', 64, 64, 3, 1, 1, bias=False), nn.BatchNorm2d(64), act
+        )
 
         if self.args.input_type == 'binary':
             self.p_x_mean = Conv2d(64, 1, 1, 1, 0, activation=nn.Sigmoid())
         elif self.args.input_type == 'gray' or self.args.input_type == 'continuous':
-            self.p_x_mean = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Sigmoid() )
-            self.p_x_logvar = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Hardtanh(min_val=-4.5, max_val=0.))
+            self.p_x_mean = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Sigmoid(), bias=False )
+            self.p_x_logvar = Conv2d(64, self.args.input_size[0], 1, 1, 0, activation=nn.Hardtanh(min_val=-4.5, max_val=0.), bias=False)
 
         # weights initialization
         for m in self.modules():
@@ -121,12 +111,6 @@ class VAE(Model):
 
     # AUXILIARY METHODS
     def calculate_loss(self, x, beta=1., average=False):
-        '''
-        :param x: input image(s)
-        :param beta: a hyperparam for warmup
-        :param average: whether to average loss or not
-        :return: value of a loss function
-        '''
         # pass through VAE
         x_mean, x_logvar, z1_q, z1_q_mean, z1_q_logvar, z2_q, z2_q_mean, z2_q_logvar, z1_p_mean, z1_p_logvar = self.forward(x)
 
@@ -279,8 +263,7 @@ class VAE(Model):
     # THE MODEL: VARIATIONAL POSTERIOR
     def q_z2(self, x):
         # processing x
-        for i in range(len(self.q_z2_layers)):
-            x = self.q_z2_layers[i](x)
+        x = self.q_z2_layers(x)
 
         h = x.view(x.size(0),-1)
 
@@ -291,21 +274,18 @@ class VAE(Model):
 
     def q_z1(self, x, z2):
         # processing x
-        for i in range(len(self.q_z1_layers_x)):
-            x = self.q_z1_layers_x[i](x)
+        x = self.q_z1_layers_x(x)
 
         x = x.view(x.size(0), -1)
 
         # processing z2
-        for j in range(len(self.q_z1_layers_z2)):
-            z2 = self.q_z1_layers_z2[j](z2)
+        z2 = self.q_z1_layers_z2(z2)
 
         # concatenating
         h = torch.cat( (x, z2), 1 )
 
         # processing jointly
-        for k in range(len(self.q_z1_layers_joint)):
-            h = self.q_z1_layers_joint[k](h)
+        h = self.q_z1_layers_joint(h)
 
         # predict mean and variance
         z1_q_mean = self.q_z1_mean(h)
@@ -314,8 +294,7 @@ class VAE(Model):
 
     # THE MODEL: GENERATIVE DISTRIBUTION
     def p_z1(self, z2):
-        for i in range(len(self.p_z1_layers)):
-            z2 = self.p_z1_layers[i](z2)
+        z2 = self.p_z1_layers(z2)
 
         z1_p_mean = self.p_z1_mean(z2)
         z1_p_logvar = self.p_z1_logvar(z2)
@@ -323,13 +302,11 @@ class VAE(Model):
 
     def p_x(self, x, z1, z2):
         # processing z1
-        for i in range(len(self.p_x_layers_z1)):
-            z1 = self.p_x_layers_z1[i](z1)
+        z1 = self.p_x_layers_z1(z1)
         z1 = z1.view(-1, self.args.input_size[0], self.args.input_size[1], self.args.input_size[2])
 
         # processing z2
-        for j in range(len(self.p_x_layers_z2)):
-            z2 = self.p_x_layers_z2[j](z2)
+        z2 = self.p_x_layers_z2(z2)
         z2 = z2.view(-1, self.args.input_size[0], self.args.input_size[1], self.args.input_size[2])
 
         # concatenate x and z1 and z2
