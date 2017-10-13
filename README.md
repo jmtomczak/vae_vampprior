@@ -23,7 +23,7 @@ The experiments can be run on the following datasets:
 python experiment.py
 ```
 ## Models
-You can run a vanilla VAE, a one-layered VAE or a two-layered VAE with the standard prior or the VampPrior by setting `model_name` argument to either: (i) `vae` or `vae_2level` for MLP, (ii) `convvae` or `convvae_2level` for convnets, and specifying `prior` argument to either `standard` or `vampprior`.
+You can run a vanilla VAE, a one-layered VAE or a two-layered HVAE with the standard prior or the VampPrior by setting `model_name` argument to either: (i) `vae` or `hvae_2level` for MLP, (ii) 'convvae_2level` for convnets, (iii) 'pixelhvae_2level' for (ii) with a PixelCNN-based decoder, and specifying `prior` argument to either `standard` or `vampprior`.
 
 ## Citation
 
@@ -37,9 +37,6 @@ Please cite our paper if you use this code in your research:
   year={2017}
 }
 ```
-
-## TODO
-* CIFAR 10 is not working properly (`NaN` after some epochs).
 
 ## Acknowledgments
 The research conducted by Jakub M. Tomczak was funded by the European Commission within the Marie Skłodowska-Curie Individual Fellowship (Grant No. 702666, ”Deep learning and Bayesian inference for medical imaging”).
