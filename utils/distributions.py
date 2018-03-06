@@ -35,21 +35,22 @@ def logisticCDF(x, u, s):
 def sigmoid(x):
     return 1. / ( 1. + torch.exp( -x ) )
 
-def log_Logistic_256(x, mean, log_s, average=False, dim=None):
-    binsize = 1. / 256.
-    scale = torch.exp(log_s)
-    # make sure image fit proper values
-    x = torch.floor(x/binsize) * binsize
-    # calculate normalized values for a bin
-    x_plus = (x + binsize - mean) / scale
-    x_minus = (x - mean) / scale
-    # calculate logistic CDF for a bin
-    cdf_plus = sigmoid(x_plus)
-    cdf_minus = sigmoid(x_minus)
-    # calculate final log-likelihood for an image
-    log_logistic_256 = - torch.log( cdf_plus - cdf_minus + 1.e-7 )
+def log_Logistic_256(x, mean, logvar, average=False, reduce=True, dim=None):
+    bin_size = 1. / 256.
 
-    if average:
-        return torch.mean( log_logistic_256, dim )
+    # implementation like https://github.com/openai/iaf/blob/master/tf_utils/distributions.py#L28
+    scale = torch.exp(logvar)
+    x = (torch.floor(x / bin_size) * bin_size - mean) / scale
+    cdf_plus = torch.sigmoid(x + bin_size/scale)
+    cdf_minus = torch.sigmoid(x)
+
+    # calculate final log-likelihood for an image
+    log_logist_256 = - torch.log(cdf_plus - cdf_minus + 1.e-7)
+
+    if reduce:
+        if average:
+            return torch.mean(log_logist_256, dim)
+        else:
+            return torch.sum(log_logist_256, dim)
     else:
-        return torch.sum( log_logistic_256, dim )
+        return log_logist_256
