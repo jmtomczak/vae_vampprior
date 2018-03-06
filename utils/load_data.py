@@ -244,6 +244,10 @@ def load_histopathologyGray(args, **kwargs):
     x_val = np.asarray(data['validation']).reshape(-1, 28 * 28)
     x_test = np.asarray(data['test']).reshape(-1, 28 * 28)
 
+    x_train = np.clip(x_train, 1./512., 1. - 1./512.)
+    x_val = np.clip(x_val, 1./512., 1. - 1./512.)
+    x_test = np.clip(x_test, 1./512., 1. - 1./512.)
+
     # idle y's
     y_train = np.zeros( (x_train.shape[0], 1) )
     y_val = np.zeros( (x_val.shape[0], 1) )
