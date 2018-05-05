@@ -48,9 +48,22 @@ def evaluate_vae(args, model, train_loader, data_loader, epoch, dir, mode):
 
     if mode == 'test':
         # load all data
-        test_data = Variable(data_loader.dataset.data_tensor)
-        test_target = Variable(data_loader.dataset.target_tensor)
-        full_data = Variable(train_loader.dataset.data_tensor)
+        # grab the test data by iterating over the loader
+        # there is no standardized tensor_dataset member across pytorch datasets
+        test_data, test_target = [], []
+        for data, lbls in data_loader:
+            test_data.append(data)
+            test_target.append(lbls)
+
+        test_data, test_target = [torch.cat(test_data, 0), torch.cat(test_target, 0).squeeze()]
+
+        # grab the train data by iterating over the loader
+        # there is no standardized tensor_dataset member across pytorch datasets
+        full_data = []
+        for data, _ in train_loader:
+            full_data.append(data)
+
+        full_data = torch.cat(full_data, 0)
 
         if args.cuda:
             test_data, test_target, full_data = test_data.cuda(), test_target.cuda(), full_data.cuda()

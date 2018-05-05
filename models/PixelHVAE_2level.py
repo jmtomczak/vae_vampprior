@@ -157,7 +157,7 @@ class VAE(Model):
             x_single = X[j].unsqueeze(0)
 
             a = []
-            for r in range(0, R):
+            for r in range(0, int(R)):
                 # Repeat it for all training points
                 x = x_single.expand(S, x_single.size(1)).contiguous()
 
