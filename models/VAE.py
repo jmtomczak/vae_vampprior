@@ -17,7 +17,7 @@ from utils.distributions import log_Bernoulli, log_Normal_diag, log_Normal_stand
 from utils.visual_evaluation import plot_histogram
 from utils.nn import he_init, GatedDense, NonLinear
 
-from Model import Model
+from models.Model import Model
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #=======================================================================================================================
