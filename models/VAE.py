@@ -17,7 +17,7 @@ from utils.distributions import log_Bernoulli, log_Normal_diag, log_Normal_stand
 from utils.visual_evaluation import plot_histogram
 from utils.nn import he_init, GatedDense, NonLinear
 
-from Model import Model
+from models.Model import Model
 # -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 
 #=======================================================================================================================
@@ -108,7 +108,7 @@ class VAE(Model):
             x_single = X[j].unsqueeze(0)
 
             a = []
-            for r in range(0, R):
+            for r in range(0, int(R)):
                 # Repeat it for all training points
                 x = x_single.expand(S, x_single.size(1))
 

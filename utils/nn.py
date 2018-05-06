@@ -42,7 +42,7 @@ class NonLinear(nn.Module):
         super(NonLinear, self).__init__()
 
         self.activation = activation
-        self.linear = nn.Linear(input_size, output_size, bias=bias)
+        self.linear = nn.Linear(int(input_size), int(output_size), bias=bias)
 
     def forward(self, x):
         h = self.linear(x)
